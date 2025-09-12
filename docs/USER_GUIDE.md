@@ -1,9 +1,9 @@
-# ADE crypt Documentation v2.1
+# ADE crypt User Guide
 
 ## Table of Contents
 
 - [Overview](#overview)
-- [What's New in v2.1](#whats-new-in-v21)
+- [What's New](#whats-new)
 - [Installation](#installation)
 - [Commands Reference](#commands-reference)
 - [Options Reference](#options-reference)
@@ -11,7 +11,7 @@
 - [Security](#security)
 - [Architecture](#architecture)
 - [Troubleshooting](#troubleshooting)
-- [Development](#development)
+- [Advanced Usage](#advanced-usage)
 
 ## Overview
 
@@ -36,7 +36,7 @@ ADE crypt is a comprehensive encryption utility for Agentic Development Environm
 - **Key expiration** and automatic rotation
 - **Import/Export** in JSON, YAML, ENV formats
 
-## What's New in v2.1
+## What's New
 
 ### Security Enhancements
 - **Multi-recipient encryption**: Encrypt files for multiple users simultaneously
@@ -513,51 +513,6 @@ ade-crypt restore last-backup.tar.gz
 - Archive large directories before encrypting
 - Consider parallel processing for batch operations
 
-## Development
-
-### Make Commands
-
-ADE crypt includes comprehensive make targets for development workflow:
-
-```bash
-# Development workflow
-make test        # Run all tests via BATS
-make lint        # Run ShellCheck linting
-make coverage    # Generate code coverage reports
-make ci          # Run full CI pipeline locally
-make dev         # Quick development cycle (lint + test)
-
-# Environment setup
-make check-deps     # Check runtime dependencies
-make install-dev    # Install development dependencies
-make setup          # Full development environment setup
-
-# Build and deployment
-make install     # Install ADE crypt system-wide
-make clean       # Clean temporary files
-make release     # Create release package
-
-# Documentation
-make docs        # Show documentation directory
-make help        # Show all available targets
-```
-
-### Quick Start for Developers
-
-```bash
-# Clone and set up
-git clone https://github.com/phdsystems/ade-crypt.git
-cd ade-crypt
-
-# Set up development environment
-make setup
-
-# Run tests to verify everything works
-make test
-
-# Make changes, then test
-make dev
-```
 
 ## Advanced Usage
 

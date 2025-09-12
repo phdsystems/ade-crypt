@@ -1,6 +1,10 @@
 # ADE crypt
 
-Advanced modular encryption utility for Agentic Development Environment with enterprise features, cloud sync, and comprehensive secret management.
+> Advanced modular encryption utility for Agentic Development Environment with enterprise features, cloud sync, and comprehensive secret management.
+
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/phdsystems/ade-crypt/releases)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Shell](https://img.shields.io/badge/shell-bash%204.0%2B-orange.svg)](https://www.gnu.org/software/bash/)
 
 ## Quick Start
 
@@ -11,185 +15,136 @@ curl -sSL https://raw.githubusercontent.com/phdsystems/ade-crypt/main/install.sh
 # Encrypt a file
 ade-crypt encrypt file sensitive.txt
 
-# Decrypt a file  
-ade-crypt decrypt file sensitive.txt.enc
-
 # Store a secret
 ade-crypt secrets store api-key
 
-# Get a secret
-ade-crypt secrets get api-key
+# Generate encryption key
+ade-crypt keys generate project-key
 ```
 
-## Core Features
+## Features
 
-- **Encryption**: AES-256-CBC with compression support
-- **Multi-Recipient**: Encrypt for multiple users
-- **Two-Factor**: Combined key + password protection  
-- **Cloud Sync**: AWS S3, Google Drive, Dropbox
-- **Streaming**: Pipeline encryption/decryption
-- **Audit Logging**: Complete operation tracking
-- **Interactive Mode**: Menu-driven interface
-- **Docker/K8s**: Container secret integration
+- 🔐 **AES-256-CBC encryption** with compression support
+- 👥 **Multi-recipient encryption** for team collaboration
+- 🔑 **Two-factor authentication** (key + password)
+- ☁️ **Cloud sync** (AWS S3, Google Drive, Dropbox)
+- 📦 **Secret management** with versioning
+- 🎯 **Modular architecture** for extensibility
+- 📚 **Standalone library** for integration
+- 🧪 **Comprehensive testing** with BATS
 
-## What's New in v2.1
+## Installation
 
-- Multi-recipient encryption
-- Two-factor authentication
-- Streaming encryption (stdin/stdout)
-- Cloud synchronization
-- Digital signatures
-- Secret versioning
-- Audit logging
-- Interactive mode
-- Docker/K8s integration
-- [Full changelog](docs/DOCS.md#whats-new-in-v21)
-
-## Dependencies
-
-### Runtime Dependencies
-- `openssl` - Encryption/decryption operations
-- `tar` - Archive operations
-- `gzip` - Compression support
-- `sha256sum` - File integrity verification
-
-### Optional Dependencies
-- `gpg` - Password-based encryption (recommended)
-- `bzip2` - Additional compression format
-- `xz` - Additional compression format
-- `aws` - AWS S3 cloud sync
-- `gsutil` - Google Cloud sync
-- `az` - Azure cloud sync
-
-### Installation
-
-**Ubuntu/Debian:**
+### System-wide
 ```bash
-sudo apt-get update
-sudo apt-get install openssl tar gzip gnupg bzip2 xz-utils
+curl -sSL https://raw.githubusercontent.com/phdsystems/ade-crypt/main/install.sh | bash
 ```
 
-**RHEL/CentOS/Fedora:**
+### As Library
 ```bash
-sudo yum install openssl tar gzip gnupg2 bzip2 xz
+curl -sSL https://raw.githubusercontent.com/phdsystems/ade-crypt/main/lib/install.sh | bash
 ```
 
-**macOS:**
+See [Installation Guide](docs/INSTALLATION.md) for more options.
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [User Guide](docs/USER_GUIDE.md) | Complete usage instructions and examples |
+| [Installation](docs/INSTALLATION.md) | Detailed installation options |
+| [Architecture](docs/ARCHITECTURE.md) | Technical design and structure |
+| [API Reference](docs/API_REFERENCE.md) | Module and function documentation |
+| [Testing](docs/TESTING.md) | Testing and quality assurance |
+| [Library Usage](lib/README.md) | Standalone library integration |
+
+## Usage Examples
+
+### Basic Operations
 ```bash
-brew install openssl gnu-tar gzip gnupg bzip2 xz
+# Encrypt/decrypt files
+ade-crypt encrypt file document.pdf
+ade-crypt decrypt file document.pdf.enc
+
+# Manage secrets
+ade-crypt secrets store github-token
+ade-crypt secrets get github-token
+ade-crypt secrets list
+
+# Key management
+ade-crypt keys generate production
+ade-crypt keys rotate
 ```
 
-**Check dependencies:**
+### Advanced Features
 ```bash
-./scripts/check-deps.sh
+# Multi-recipient encryption
+ade-crypt encrypt multi -m "alice.key,bob.key" file.pdf
+
+# Two-factor encryption
+ade-crypt encrypt file sensitive.doc -2
+
+# Stream encryption
+cat data.txt | ade-crypt encrypt stream > data.enc
+
+# Cloud backup
+ade-crypt backup create
+ade-crypt backup push
 ```
+
+See [User Guide](docs/USER_GUIDE.md) for comprehensive examples.
 
 ## Development
 
-### Development Dependencies
-- `shellcheck` - Code linting
-- `bats` - Testing framework
-- `git` - Version control
-- `make` - Build automation
+### Requirements
+- Bash 4.0+
+- OpenSSL
+- Standard Unix utilities
 
-### Setup Development Environment
+### Setup
 ```bash
-# Install development dependencies
-./scripts/install-dev-deps.sh
-
-# Verify all dependencies
-make check-deps
-
-# Set up development environment
+git clone https://github.com/phdsystems/ade-crypt.git
+cd ade-crypt
 make setup
-
-# Run tests
-make test
-
-# Run linting
-make lint
 ```
 
-## Make Commands
-
-ADE crypt includes comprehensive make targets for development:
-
+### Testing
 ```bash
-# Development workflow
-make test        # Run all tests via BATS
-make lint        # Run ShellCheck linting
-make coverage    # Generate code coverage reports
-make ci          # Run full CI pipeline locally
-make dev         # Quick development cycle (lint + test)
-
-# Environment setup
-make check-deps     # Check runtime dependencies
-make install-dev    # Install development dependencies
-make setup          # Full development environment setup
-
-# Build and deployment
-make install     # Install ADE crypt system-wide
-make clean       # Clean temporary files
-make release     # Create release package
-
-# Documentation
-make docs        # Show documentation directory
-make help        # Show all available targets
+make test        # Run tests
+make lint        # Run linting
+make coverage    # Generate coverage
+make ci          # Full CI pipeline
 ```
 
-## Common Usage
-
-```bash
-# Interactive mode
-ade-crypt interactive
-
-# Multi-recipient encryption
-ade-crypt multi-encrypt -m "alice.key,bob.key" file.pdf
-
-# Two-factor encryption
-ade-crypt encrypt -2 sensitive.doc
-
-# Stream encryption
-cat data.txt | ade-crypt stream-encrypt > data.enc
-
-# Cloud backup
-ade-crypt backup && ade-crypt cloud-sync push
-
-# Export secrets
-ade-crypt export env > .env
-```
+See [Development Guide](docs/DEVELOPMENT.md) for details.
 
 ## Project Structure
 
 ```
 ade-crypt/
-├── bin/           # Executables
 ├── src/           # Source code
-│   ├── core/      # Core logic
-│   ├── lib/       # Shared libraries
-│   └── modules/   # Feature modules
+├── lib/           # Standalone library
 ├── docs/          # Documentation
-└── tests/         # Test suite
+├── tests/         # Test suite
+└── scripts/       # Development tools
 ```
 
-See [Project Structure](docs/PROJECT_STRUCTURE.md) for detailed layout.
+See [Architecture](docs/ARCHITECTURE.md) for detailed structure.
 
-## Documentation
+## Contributing
 
-- [Detailed Documentation](docs/DOCS.md)
-- [Project Structure](docs/PROJECT_STRUCTURE.md)
-- [Testing Guide](docs/TESTING.md)
-
-## Requirements
-
-- Bash 4.0+
-- OpenSSL
-- Standard Unix utilities
+Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) first.
 
 ## License
 
-MIT - See [LICENSE](LICENSE)
+MIT License - see [LICENSE](LICENSE) file.
 
 ## Support
 
-[Issues](https://github.com/phdsystems/ade-crypt/issues) | [PHD-ADE](https://github.com/phdsystems/phd-ade)
+- **Issues**: [GitHub Issues](https://github.com/phdsystems/ade-crypt/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/phdsystems/ade-crypt/discussions)
+- **Security**: Report vulnerabilities privately via GitHub Security
+
+## Credits
+
+Developed by [PHD Systems](https://github.com/phdsystems) as part of the Agentic Development Environment (ADE) initiative.
