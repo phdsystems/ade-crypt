@@ -246,6 +246,8 @@ secure_delete() {
         if command -v shred >/dev/null 2>&1; then
             shred -vzu "${file}" 2>/dev/null || rm -f "${file}"
         else
+            # Overwrite with random data if shred not available
+            dd if=/dev/urandom of="${file}" bs=1024 count=$(du -k "${file}" | cut -f1) 2>/dev/null
             rm -f "${file}"
         fi
         verbose_output "Securely deleted: ${file}"

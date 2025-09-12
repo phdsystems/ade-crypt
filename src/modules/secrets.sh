@@ -5,6 +5,25 @@
 # Source common library
 source "$(dirname "$0")/../lib/common.sh"
 
+# Cleanup function for trap
+cleanup_secrets() {
+    local exit_code=$?
+    if [ -n "${TEMP_FILES:-}" ]; then
+        for temp_file in ${TEMP_FILES}; do
+            if [ -f "${temp_file}" ]; then
+                shred -vzu "${temp_file}" 2>/dev/null || rm -f "${temp_file}"
+            fi
+        done
+    fi
+    exit ${exit_code}
+}
+
+# Set trap for cleanup
+trap cleanup_secrets EXIT INT TERM
+
+# Track temp files for cleanup
+TEMP_FILES=""
+
 # Store secret
 store_secret() {
     local name="$1"
@@ -195,8 +214,11 @@ delete_secret() {
     
     if confirm_action "Delete secret '${name}'?"; then
         # Delete all versions
-        rm -f "${VERSIONS_DIR}/${name}_"*.enc
-        rm -f "${metadata_file}"
+        # Use shred for version files containing encrypted secrets
+        for version_file in "${VERSIONS_DIR}/${name}_"*.enc; do
+            [ -f "${version_file}" ] && shred -vzu "${version_file}" 2>/dev/null
+        done
+        shred -vzu "${metadata_file}" 2>/dev/null || rm -f "${metadata_file}"
         
         # Securely delete secret
         shred -vzu "${secret_file}" 2>/dev/null || rm -f "${secret_file}"

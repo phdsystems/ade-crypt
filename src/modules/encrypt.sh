@@ -5,6 +5,25 @@
 # Source common library
 source "$(dirname "$0")/../lib/common.sh"
 
+# Cleanup function for trap
+cleanup_encrypt() {
+    local exit_code=$?
+    if [ -n "${TEMP_FILES:-}" ]; then
+        for temp_file in ${TEMP_FILES}; do
+            if [ -f "${temp_file}" ]; then
+                shred -vzu "${temp_file}" 2>/dev/null || rm -f "${temp_file}"
+            fi
+        done
+    fi
+    exit ${exit_code}
+}
+
+# Set trap for cleanup
+trap cleanup_encrypt EXIT INT TERM
+
+# Track temp files for cleanup
+TEMP_FILES=""
+
 # Compression wrapper
 compress_data() {
     local compression_type="${1:-gzip}"
@@ -84,7 +103,9 @@ encrypt_two_factor() {
     info_msg "Two-factor encryption: ${input_file}"
     
     # First pass: key-based
-    local temp_file="/tmp/2fa_temp_$$.enc"
+    local temp_file
+    temp_file=$(mktemp /tmp/2fa_temp_XXXXXX.enc) || error_exit "Failed to create temp file"
+    TEMP_FILES="${TEMP_FILES} ${temp_file}"
     openssl enc -aes-256-cbc -salt -in "${input_file}" -out "${temp_file}" -pass file:"${key_file}"
     
     # Second pass: password-based
@@ -136,7 +157,9 @@ encrypt_multi() {
     # Create session key
     local session_key
     session_key=$(openssl rand -hex 32)
-    local session_key_file="/tmp/session_$$.key"
+    local session_key_file
+    session_key_file=$(mktemp /tmp/session_XXXXXX.key) || error_exit "Failed to create temp file"
+    TEMP_FILES="${TEMP_FILES} ${session_key_file}"
     echo "${session_key}" > "${session_key_file}"
     
     # Encrypt file with session key

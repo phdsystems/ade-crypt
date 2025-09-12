@@ -5,6 +5,25 @@
 # Source common library
 source "$(dirname "$0")/../lib/common.sh"
 
+# Cleanup function for trap
+cleanup_decrypt() {
+    local exit_code=$?
+    if [ -n "${TEMP_FILES:-}" ]; then
+        for temp_file in ${TEMP_FILES}; do
+            if [ -f "${temp_file}" ]; then
+                shred -vzu "${temp_file}" 2>/dev/null || rm -f "${temp_file}"
+            fi
+        done
+    fi
+    exit ${exit_code}
+}
+
+# Set trap for cleanup
+trap cleanup_decrypt EXIT INT TERM
+
+# Track temp files for cleanup
+TEMP_FILES=""
+
 # Decompression wrapper
 decompress_data() {
     local compression_type="${1:-gzip}"
@@ -44,7 +63,7 @@ decrypt_file() {
             if [ "${expected}" = "${actual}" ]; then
                 success_msg "Checksum verified"
             else
-                rm -f "${output_file}"
+                shred -vzu "${output_file}" 2>/dev/null || rm -f "${output_file}"
                 error_exit "Checksum mismatch!"
             fi
         fi
@@ -89,7 +108,9 @@ decrypt_two_factor() {
     info_msg "Two-factor decryption: ${input_file}"
     
     # First pass: password-based
-    local temp_file="/tmp/2fa_temp_$$.enc"
+    local temp_file
+    temp_file=$(mktemp /tmp/2fa_temp_XXXXXX.enc) || error_exit "Failed to create temp file"
+    TEMP_FILES="${TEMP_FILES} ${temp_file}"
     warning_msg "Enter password for first factor:"
     gpg --decrypt --output "${temp_file}" "${input_file}"
     
@@ -133,7 +154,9 @@ decrypt_multi() {
     info_msg "Multi-recipient decryption: ${input_file}"
     
     # Decrypt session key
-    local session_key_file="/tmp/session_$$.key"
+    local session_key_file
+    session_key_file=$(mktemp /tmp/session_XXXXXX.key) || error_exit "Failed to create temp file"
+    TEMP_FILES="${TEMP_FILES} ${session_key_file}"
     local private_key="${KEYS_DIR}/${key_name}.pem"
     
     [ -f "${private_key}" ] || error_exit "Private key not found: ${private_key}"

@@ -5,6 +5,25 @@
 # Source common library
 source "$(dirname "$0")/../lib/common.sh"
 
+# Cleanup function for trap
+cleanup_keys() {
+    local exit_code=$?
+    if [ -n "${TEMP_FILES:-}" ]; then
+        for temp_file in ${TEMP_FILES}; do
+            if [ -f "${temp_file}" ]; then
+                shred -vzu "${temp_file}" 2>/dev/null || rm -f "${temp_file}"
+            fi
+        done
+    fi
+    exit ${exit_code}
+}
+
+# Set trap for cleanup
+trap cleanup_keys EXIT INT TERM
+
+# Track temp files for cleanup
+TEMP_FILES=""
+
 # Generate key
 generate_key() {
     local key_name="${1:-default}"
@@ -120,8 +139,8 @@ rotate_keys() {
             ((rotated++))
         else
             warning_msg "Failed to rotate: ${name}"
-            rm -f "${temp_file}"
-            rm -f "${new_key}"
+            shred -vzu "${temp_file}" 2>/dev/null || rm -f "${temp_file}"
+            shred -vzu "${new_key}" 2>/dev/null || rm -f "${new_key}"
             error_exit "Key rotation failed"
         fi
     done
@@ -160,8 +179,8 @@ delete_key() {
         # Securely delete key files
         [ -f "${key_file}" ] && shred -vzu "${key_file}" 2>/dev/null
         [ -f "${pem_file}" ] && shred -vzu "${pem_file}" 2>/dev/null
-        [ -f "${pub_file}" ] && rm -f "${pub_file}"
-        [ -f "${meta_file}" ] && rm -f "${meta_file}"
+        [ -f "${pub_file}" ] && (shred -vzu "${pub_file}" 2>/dev/null || rm -f "${pub_file}")
+        [ -f "${meta_file}" ] && (shred -vzu "${meta_file}" 2>/dev/null || rm -f "${meta_file}")
         
         audit_log "DELETE_KEY: ${key_name}"
         success_msg "Key deleted: ${key_name}"
