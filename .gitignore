@@ -1,0 +1,40 @@
+# Encrypted files
+*.enc
+*.encrypted
+*.gpg
+*.asc
+
+# Key files (never commit these!)
+*.key
+*.pem
+*.der
+*.p12
+*.pfx
+
+# Backup files
+*.backup
+*.bak
+*~
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# ADE-Crypt data directory
+.ade-crypt/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test files
+test-data/
+test-keys/
