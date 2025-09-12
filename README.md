@@ -80,13 +80,13 @@ ade-crypt/
 └── tests/         # Test suite
 ```
 
-See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for detailed layout.
+See [Project Structure](docs/PROJECT_STRUCTURE.md) for detailed layout.
 
 ## Documentation
 
 - [Detailed Documentation](docs/DOCS.md)
 - [Modular Architecture](docs/MODULAR.md)
-- [Project Structure](PROJECT_STRUCTURE.md)
+- [Project Structure](docs/PROJECT_STRUCTURE.md)
 
 ## Requirements
 
