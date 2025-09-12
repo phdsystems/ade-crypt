@@ -32,10 +32,33 @@ ADE-Crypt uses a comprehensive testing and quality assurance pipeline with indus
 
 ## Running Tests
 
+### Make Commands
+
+ADE crypt provides convenient make targets for all testing and development tasks:
+
+```bash
+# Testing
+make test        # Run all tests via BATS
+make lint        # Run ShellCheck linting  
+make coverage    # Generate coverage report
+make ci          # Full CI pipeline (lint + test + integration)
+make dev         # Quick development cycle (lint + test)
+
+# Environment
+make setup       # Set up development environment
+make check-deps  # Check all dependencies
+make clean       # Clean temporary files
+make help        # Show all available targets
+```
+
+### Script Commands
+
 ### Quick Test
 ```bash
 # Run all tests
 ./scripts/test.sh
+# or
+make test
 
 # Run specific test file
 ./scripts/test.sh basic.bats
@@ -48,6 +71,8 @@ VERBOSE=true ./scripts/test.sh
 ```bash
 # Run ShellCheck on all scripts
 ./scripts/lint.sh
+# or
+make lint
 
 # Check specific file
 shellcheck src/modules/encrypt.sh
@@ -57,6 +82,8 @@ shellcheck src/modules/encrypt.sh
 ```bash
 # Generate coverage report
 ./scripts/coverage.sh
+# or
+make coverage
 
 # View report
 open coverage/index.html
@@ -185,6 +212,11 @@ The GitHub Actions workflow includes:
 ```bash
 # Run the same checks as CI
 ./scripts/lint.sh && ./scripts/test.sh
+# or
+make ci
+
+# Quick development cycle
+make dev  # Equivalent to: make lint test
 ```
 
 ## Pre-commit Setup

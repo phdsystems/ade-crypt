@@ -11,6 +11,7 @@
 - [Security](#security)
 - [Architecture](#architecture)
 - [Troubleshooting](#troubleshooting)
+- [Development](#development)
 
 ## Overview
 
@@ -511,6 +512,52 @@ ade-crypt restore last-backup.tar.gz
 - Use password-based for interactive security (more secure)
 - Archive large directories before encrypting
 - Consider parallel processing for batch operations
+
+## Development
+
+### Make Commands
+
+ADE crypt includes comprehensive make targets for development workflow:
+
+```bash
+# Development workflow
+make test        # Run all tests via BATS
+make lint        # Run ShellCheck linting
+make coverage    # Generate code coverage reports
+make ci          # Run full CI pipeline locally
+make dev         # Quick development cycle (lint + test)
+
+# Environment setup
+make check-deps     # Check runtime dependencies
+make install-dev    # Install development dependencies
+make setup          # Full development environment setup
+
+# Build and deployment
+make install     # Install ADE crypt system-wide
+make clean       # Clean temporary files
+make release     # Create release package
+
+# Documentation
+make docs        # Show documentation directory
+make help        # Show all available targets
+```
+
+### Quick Start for Developers
+
+```bash
+# Clone and set up
+git clone https://github.com/phdsystems/ade-crypt.git
+cd ade-crypt
+
+# Set up development environment
+make setup
+
+# Run tests to verify everything works
+make test
+
+# Make changes, then test
+make dev
+```
 
 ## Advanced Usage
 
