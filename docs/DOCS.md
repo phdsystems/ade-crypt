@@ -35,7 +35,7 @@ ADE crypt is a comprehensive encryption utility for Agentic Development Environm
 - **Key expiration** and automatic rotation
 - **Import/Export** in JSON, YAML, ENV formats
 
-## What's New in v2.0
+## What's New in v2.1
 
 ### Security Enhancements
 - **Multi-recipient encryption**: Encrypt files for multiple users simultaneously

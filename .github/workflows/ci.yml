@@ -141,7 +141,7 @@ jobs:
         mkdir -p release/ade-crypt
         
         # Copy necessary files
-        cp -r bin src docs ade-crypt install.sh LICENSE README.md release/ade-crypt/
+        cp -r src docs scripts tests ade-crypt install.sh LICENSE README.md Makefile release/ade-crypt/
         
         # Create tarball
         cd release

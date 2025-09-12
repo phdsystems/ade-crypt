@@ -24,21 +24,33 @@ ade-crypt/
 │
 ├── docs/                   # Documentation
 │   ├── DOCS.md            # Detailed documentation
-│   └── MODULAR.md         # Modular architecture guide
+│   ├── PROJECT_STRUCTURE.md # Project structure guide
+│   └── TESTING.md         # Testing documentation
 │
-├── tests/                  # Test suite (future)
+├── tests/                  # Test suite
+│   ├── basic.bats         # Basic functionality tests
+│   ├── modules/           # Module-specific tests
+│   └── test_helper.bash   # Test utilities
 │
-├── ade-crypt -> bin/ade-crypt  # Symlink for convenience
+├── scripts/               # Development scripts
+│   ├── check-deps.sh      # Dependency checking
+│   ├── coverage.sh        # Coverage reporting
+│   ├── install-dev-deps.sh # Dev dependency installation
+│   ├── lint.sh            # Code linting
+│   └── test.sh            # Test runner
+│
+├── ade-crypt              # Main executable
 ├── install.sh             # Installation script
 ├── README.md              # Project readme
 ├── LICENSE                # MIT License
+├── Makefile               # Build automation
 └── .gitignore            # Git ignore rules
 ```
 
 ## Component Descriptions
 
-### `/bin`
-User-facing executable scripts. The main `ade-crypt` script is the entry point.
+### Main Executable
+The `ade-crypt` script in the project root is the main entry point.
 
 ### `/src/core`
 Core functionality including command dispatching and help system.
@@ -55,8 +67,8 @@ Feature modules, each handling a specific domain:
 - **export.sh**: Import/export in various formats
 - **backup.sh**: Backup creation and cloud sync
 
-### `/src/legacy`
-Previous versions kept for reference and rollback capability.
+### `/scripts`
+Development and maintenance scripts for building, testing, and deployment.
 
 ### `/docs`
 Comprehensive documentation including usage guides and architecture details.
@@ -87,7 +99,7 @@ Modules communicate through:
 
 ## Execution Flow
 
-1. User runs `ade-crypt` (or `bin/ade-crypt`)
+1. User runs `ade-crypt` from project root
 2. Main script sources core components
 3. Dispatcher routes to appropriate module
 4. Module executes operation
@@ -138,10 +150,10 @@ Run tests with:
 ./src/modules/encrypt.sh file test.txt
 
 # Test through main executable
-./bin/ade-crypt encrypt file test.txt
+./ade-crypt encrypt file test.txt
 
-# Run test suite (future)
-./tests/run_tests.sh
+# Run test suite
+./scripts/test.sh
 ```
 
 ## Deployment

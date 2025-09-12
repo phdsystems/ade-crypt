@@ -32,7 +32,7 @@ ade-crypt get api-key
 - **Interactive Mode**: Menu-driven interface
 - **Docker/K8s**: Container secret integration
 
-## What's New in v2.0
+## What's New in v2.1
 
 - Multi-recipient encryption
 - Two-factor authentication
@@ -43,7 +43,7 @@ ade-crypt get api-key
 - Audit logging
 - Interactive mode
 - Docker/K8s integration
-- [Full changelog](DOCS.md#whats-new-in-v20)
+- [Full changelog](docs/DOCS.md#whats-new-in-v20)
 
 ## Dependencies
 
