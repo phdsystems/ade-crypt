@@ -1,0 +1,16 @@
+# ShellCheck configuration for ADE-Crypt
+
+# Disable specific warnings that don't apply to our use case
+disable=SC2034  # Variable appears unused (we use many exported vars)
+disable=SC2164  # Use 'cd ... || exit' (we use set -e)
+disable=SC1091  # Not following sourced files (our modules are dynamic)
+
+# Enable optional checks
+enable=require-variable-braces
+enable=quote-safe-variables
+
+# Set shell dialect
+shell=bash
+
+# External sources (for dynamic sourcing)
+external-sources=true

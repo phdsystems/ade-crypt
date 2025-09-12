@@ -1,0 +1,57 @@
+# Pre-commit hooks configuration for ADE-Crypt
+# Install with: pip install pre-commit && pre-commit install
+
+repos:
+  # Shell script linting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        args: [--severity=warning]
+        files: \.(sh|bash)$
+        exclude: ^src/legacy/
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # Check file formatting
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      
+      # Security checks
+      - id: detect-private-key
+        exclude: tests/
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+
+  # Markdown formatting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.37.0
+    hooks:
+      - id: markdownlint
+        args: [--fix]
+
+  # Custom hooks
+  - repo: local
+    hooks:
+      # Run our custom linting
+      - id: ade-crypt-lint
+        name: ADE-Crypt Linting
+        entry: ./scripts/lint.sh
+        language: script
+        files: \.(sh|bash)$
+        exclude: ^src/legacy/
+        
+      # Run tests on changes
+      - id: ade-crypt-test
+        name: ADE-Crypt Tests
+        entry: ./scripts/test.sh
+        language: script
+        files: ^(src/|tests/|ade-crypt$|bin/)
+        stages: [push]
