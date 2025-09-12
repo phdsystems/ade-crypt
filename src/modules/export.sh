@@ -9,19 +9,21 @@ source "$(dirname "$0")/../lib/common.sh"
 export_secrets() {
     local format="${1:-json}"
     
-    info_msg "Exporting secrets as: $format"
+    info_msg "Exporting secrets as: ${format}"
     
-    case "$format" in
+    case "${format}" in
         json)
             echo "{"
             local first=true
-            for file in "$SECRETS_DIR"/*.enc; do
-                [ -f "$file" ] || continue
-                local name=$(basename "$file" .enc)
-                local value=$("$MODULES_DIR/secrets.sh" get "$name" 2>/dev/null)
+            for file in "${SECRETS_DIR}"/*.enc; do
+                [ -f "${file}" ] || continue
+                local name
+                name=$(basename "${file}" .enc)
+                local value
+                value=$("${MODULES_DIR}/secrets.sh" get "${name}" 2>/dev/null)
                 
-                [ "$first" = true ] && first=false || echo ","
-                echo -n "  \"$name\": \"$value\""
+                [ "${first}" = true ] && first=false || echo ","
+                echo -n "  \"${name}\": \"${value}\""
             done
             echo ""
             echo "}"
@@ -29,31 +31,37 @@ export_secrets() {
             
         yaml)
             echo "secrets:"
-            for file in "$SECRETS_DIR"/*.enc; do
-                [ -f "$file" ] || continue
-                local name=$(basename "$file" .enc)
-                local value=$("$MODULES_DIR/secrets.sh" get "$name" 2>/dev/null)
-                echo "  $name: \"$value\""
+            for file in "${SECRETS_DIR}"/*.enc; do
+                [ -f "${file}" ] || continue
+                local name
+                name=$(basename "${file}" .enc)
+                local value
+                value=$("${MODULES_DIR}/secrets.sh" get "${name}" 2>/dev/null)
+                echo "  ${name}: \"${value}\""
             done
             ;;
             
         env)
-            for file in "$SECRETS_DIR"/*.enc; do
-                [ -f "$file" ] || continue
-                local name=$(basename "$file" .enc | tr '[:lower:]' '[:upper:]' | tr '-' '_')
-                local value=$("$MODULES_DIR/secrets.sh" get "$(basename "$file" .enc)" 2>/dev/null)
-                echo "export $name=\"$value\""
+            for file in "${SECRETS_DIR}"/*.enc; do
+                [ -f "${file}" ] || continue
+                local name
+                name=$(basename "${file}" .enc | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+                local value
+                value=$("${MODULES_DIR}/secrets.sh" get "$(basename "${file}" .enc)" 2>/dev/null)
+                echo "export ${name}=\"${value}\""
             done
             ;;
             
         docker)
             echo "#!/bin/bash"
             echo "# Docker secrets creation script"
-            for file in "$SECRETS_DIR"/*.enc; do
-                [ -f "$file" ] || continue
-                local name=$(basename "$file" .enc)
-                local value=$("$MODULES_DIR/secrets.sh" get "$name" 2>/dev/null)
-                echo "echo '$value' | docker secret create $name -"
+            for file in "${SECRETS_DIR}"/*.enc; do
+                [ -f "${file}" ] || continue
+                local name
+                name=$(basename "${file}" .enc)
+                local value
+                value=$("${MODULES_DIR}/secrets.sh" get "${name}" 2>/dev/null)
+                echo "echo '${value}' | docker secret create ${name} -"
             done
             ;;
             
@@ -65,38 +73,44 @@ export_secrets() {
             echo "  namespace: default"
             echo "type: Opaque"
             echo "data:"
-            for file in "$SECRETS_DIR"/*.enc; do
-                [ -f "$file" ] || continue
-                local name=$(basename "$file" .enc)
-                local value=$("$MODULES_DIR/secrets.sh" get "$name" 2>/dev/null | base64 -w0)
-                echo "  $name: $value"
+            for file in "${SECRETS_DIR}"/*.enc; do
+                [ -f "${file}" ] || continue
+                local name
+                name=$(basename "${file}" .enc)
+                local value
+                value=$("${MODULES_DIR}/secrets.sh" get "${name}" 2>/dev/null | base64 -w0)
+                echo "  ${name}: ${value}"
             done
             ;;
             
         csv)
             echo "name,value,category,tags"
-            for file in "$SECRETS_DIR"/*.enc; do
-                [ -f "$file" ] || continue
-                local name=$(basename "$file" .enc)
-                local value=$("$MODULES_DIR/secrets.sh" get "$name" 2>/dev/null)
-                local meta_file="$METADATA_DIR/secret_${name}.meta"
+            for file in "${SECRETS_DIR}"/*.enc; do
+                [ -f "${file}" ] || continue
+                local name
+                name=$(basename "${file}" .enc)
+                local value
+                value=$("${MODULES_DIR}/secrets.sh" get "${name}" 2>/dev/null)
+                local meta_file="${METADATA_DIR}/secret_${name}.meta"
                 
-                if [ -f "$meta_file" ]; then
-                    local category=$(grep '"category"' "$meta_file" | cut -d'"' -f4)
-                    local tags=$(grep '"tags"' "$meta_file" | cut -d'"' -f4)
-                    echo "\"$name\",\"$value\",\"$category\",\"$tags\""
+                if [ -f "${meta_file}" ]; then
+                    local category
+                    category=$(grep '"category"' "${meta_file}" | cut -d'"' -f4)
+                    local tags
+                    tags=$(grep '"tags"' "${meta_file}" | cut -d'"' -f4)
+                    echo "\"${name}\",\"${value}\",\"${category}\",\"${tags}\""
                 else
-                    echo "\"$name\",\"$value\",\"\",\"\""
+                    echo "\"${name}\",\"${value}\",\"\",\"\""
                 fi
             done
             ;;
             
         *)
-            error_exit "Unknown format: $format (supported: json, yaml, env, docker, k8s, csv)"
+            error_exit "Unknown format: ${format} (supported: json, yaml, env, docker, k8s, csv)"
             ;;
     esac
     
-    audit_log "EXPORT: format=$format"
+    audit_log "EXPORT: format=${format}"
 }
 
 # Import secrets from file
@@ -104,62 +118,63 @@ import_secrets() {
     local file="$1"
     local format="${2:-auto}"
     
-    [ -f "$file" ] || error_exit "File not found: $file"
+    [ -f "${file}" ] || error_exit "File not found: ${file}"
     
-    info_msg "Importing secrets from: $file"
+    info_msg "Importing secrets from: ${file}"
     
     # Auto-detect format
-    if [ "$format" = "auto" ]; then
-        if grep -q "^{" "$file"; then
+    if [ "${format}" = "auto" ]; then
+        if grep -q "^{" "${file}"; then
             format="json"
-        elif grep -q "^secrets:" "$file"; then
+        elif grep -q "^secrets:" "${file}"; then
             format="yaml"
-        elif grep -q "^export " "$file"; then
+        elif grep -q "^export " "${file}"; then
             format="env"
-        elif grep -q "^name,value" "$file"; then
+        elif grep -q "^name,value" "${file}"; then
             format="csv"
         else
             error_exit "Cannot detect format. Please specify: json, yaml, env, or csv"
         fi
     fi
     
-    verbose_output "Detected format: $format"
+    verbose_output "Detected format: ${format}"
     
-    case "$format" in
+    case "${format}" in
         json)
             while IFS= read -r line; do
-                if [[ "$line" =~ \"([^\"]+)\":\ *\"([^\"]+)\" ]]; then
+                if [[ "${line}" =~ \"([^\"]+)\":\ *\"([^\"]+)\" ]]; then
                     local name="${BASH_REMATCH[1]}"
                     local value="${BASH_REMATCH[2]}"
-                    echo "$value" | "$MODULES_DIR/secrets.sh" store "$name"
+                    echo "${value}" | "${MODULES_DIR}/secrets.sh" store "${name}"
                 fi
-            done < "$file"
+            done < "${file}"
             ;;
             
         yaml)
             while IFS= read -r line; do
-                if [[ "$line" =~ ^[[:space:]]+([^:]+):\ *\"?([^\"]*)\"? ]]; then
+                if [[ "${line}" =~ ^[[:space:]]+([^:]+):\ *\"?([^\"]*)\"? ]]; then
                     local name="${BASH_REMATCH[1]}"
                     local value="${BASH_REMATCH[2]}"
-                    echo "$value" | "$MODULES_DIR/secrets.sh" store "$name"
+                    echo "${value}" | "${MODULES_DIR}/secrets.sh" store "${name}"
                 fi
-            done < "$file"
+            done < "${file}"
             ;;
             
         env)
             while IFS= read -r line; do
-                if [[ "$line" =~ ^export\ +([A-Z_]+)=\"(.*)\" ]]; then
-                    local name=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
+                if [[ "${line}" =~ ^export\ +([A-Z_]+)=\"(.*)\" ]]; then
+                    local name
+                    name=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
                     local value="${BASH_REMATCH[2]}"
-                    echo "$value" | "$MODULES_DIR/secrets.sh" store "$name"
+                    echo "${value}" | "${MODULES_DIR}/secrets.sh" store "${name}"
                 fi
-            done < "$file"
+            done < "${file}"
             ;;
             
         csv)
             local header=true
             while IFS=, read -r name value category tags; do
-                if [ "$header" = true ]; then
+                if [ "${header}" = true ]; then
                     header=false
                     continue
                 fi
@@ -173,16 +188,16 @@ import_secrets() {
                 tags="${tags%\"}"
                 tags="${tags#\"}"
                 
-                echo "$value" | "$MODULES_DIR/secrets.sh" store "$name" "$category" "$tags"
-            done < "$file"
+                echo "${value}" | "${MODULES_DIR}/secrets.sh" store "${name}" "${category}" "${tags}"
+            done < "${file}"
             ;;
             
         *)
-            error_exit "Unknown format: $format"
+            error_exit "Unknown format: ${format}"
             ;;
     esac
     
-    audit_log "IMPORT: $file (format: $format)"
+    audit_log "IMPORT: ${file} (format: ${format})"
     success_msg "Secrets imported"
 }
 
@@ -190,18 +205,19 @@ import_secrets() {
 share_qr() {
     local name="$1"
     
-    [ -z "$name" ] && error_exit "Please specify secret name"
+    [ -z "${name}" ] && error_exit "Please specify secret name"
     
-    local value=$("$MODULES_DIR/secrets.sh" get "$name")
+    local value
+    value=$("${MODULES_DIR}/secrets.sh" get "${name}")
     
     if command -v qrencode >/dev/null 2>&1; then
-        info_msg "QR code for: $name"
-        echo "$value" | qrencode -t UTF8
-        audit_log "SHARE_QR: $name"
+        info_msg "QR code for: ${name}"
+        echo "${value}" | qrencode -t UTF8
+        audit_log "SHARE_QR: ${name}"
     else
         warning_msg "qrencode not installed. Install with: apt-get install qrencode"
         info_msg "Secret value:"
-        echo "$value"
+        echo "${value}"
     fi
 }
 

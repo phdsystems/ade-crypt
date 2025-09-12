@@ -4,17 +4,17 @@
 
 # Get base directory
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-source "$BASE_DIR/src/lib/common.sh"
+source "${BASE_DIR}/src/lib/common.sh"
 
 # Show version
 show_version() {
-    echo "$PRODUCT_NAME v$VERSION"
-    echo "$PRODUCT_DESCRIPTION"
+    echo "${PRODUCT_NAME} v${VERSION}"
+    echo "${PRODUCT_DESCRIPTION}"
 }
 
 # Show main help
 show_help() {
-    echo -e "${BOLD}${CYAN}$PRODUCT_NAME v$VERSION${NC}"
+    echo -e "${BOLD}${CYAN}${PRODUCT_NAME} v${VERSION}${NC}"
     echo ""
     echo "Usage: ade-crypt <module> <command> [options]"
     echo ""
@@ -63,7 +63,7 @@ show_help() {
 show_module_help() {
     local module="$1"
     
-    case "$module" in
+    case "${module}" in
         encrypt)
             echo -e "${BOLD}Encryption Module${NC}"
             echo ""
@@ -144,7 +144,7 @@ show_module_help() {
             ;;
             
         *)
-            echo "Unknown module: $module"
+            echo "Unknown module: ${module}"
             echo "Available modules: encrypt, decrypt, secrets, keys, export, backup"
             ;;
     esac

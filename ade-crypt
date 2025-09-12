@@ -5,21 +5,21 @@
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # If we're in bin/, go up one level. Otherwise we're in the root
-if [[ "$SCRIPT_DIR" == */bin ]]; then
-    BASE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [[ "${SCRIPT_DIR}" == */bin ]]; then
+    BASE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 else
-    BASE_DIR="$SCRIPT_DIR"
+    BASE_DIR="${SCRIPT_DIR}"
 fi
 
 # Set up paths
-export SRC_DIR="$BASE_DIR/src"
-export MODULES_DIR="$SRC_DIR/modules"
-export LIB_DIR="$SRC_DIR/lib"
-export CORE_DIR="$SRC_DIR/core"
+export SRC_DIR="${BASE_DIR}/src"
+export MODULES_DIR="${SRC_DIR}/modules"
+export LIB_DIR="${SRC_DIR}/lib"
+export CORE_DIR="${SRC_DIR}/core"
 
 # Source core components
-source "$CORE_DIR/dispatcher.sh"
-source "$CORE_DIR/help.sh"
+source "${CORE_DIR}/dispatcher.sh"
+source "${CORE_DIR}/help.sh"
 
 # Initialize
 init_directories
@@ -36,7 +36,7 @@ main() {
     # Parse command
     local command="${1:-help}"
     
-    case "$command" in
+    case "${command}" in
         help|--help|-h)
             show_help
             ;;
@@ -54,7 +54,7 @@ main() {
         *)
             # Try as legacy command first
             if ! handle_legacy_command "$@"; then
-                error_exit "Unknown command: $command (try 'help')"
+                error_exit "Unknown command: ${command} (try 'help')"
             fi
             ;;
     esac

@@ -97,16 +97,19 @@ FAILED=0
 
 for script in "${SCRIPTS[@]}"; do
     if [ -f "$script" ]; then
-        echo -n "Checking $script... "
-        ((TOTAL++))
+        echo "Checking $script..."
+        TOTAL=$((TOTAL + 1))
         
-        if shellcheck "$script"; then
+        # Capture shellcheck output
+        if OUTPUT=$(shellcheck "$script" 2>&1); then
             echo -e "${GREEN}✓ PASSED${NC}"
-            ((PASSED++))
+            PASSED=$((PASSED + 1))
         else
             echo -e "${RED}✗ FAILED${NC}"
-            ((FAILED++))
+            echo "$OUTPUT"
+            FAILED=$((FAILED + 1))
         fi
+        echo ""
     fi
 done
 

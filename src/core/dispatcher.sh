@@ -4,38 +4,38 @@
 
 # Get base directory (two levels up from core)
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-export MODULES_DIR="$BASE_DIR/src/modules"
-export LIB_DIR="$BASE_DIR/src/lib"
+export MODULES_DIR="${BASE_DIR}/src/modules"
+export LIB_DIR="${BASE_DIR}/src/lib"
 
 # Source common library
-source "$LIB_DIR/common.sh"
+source "${LIB_DIR}/common.sh"
 
 # Module dispatcher
 dispatch_module() {
     local module="$1"
     shift
     
-    case "$module" in
+    case "${module}" in
         encrypt|enc)
-            "$MODULES_DIR/encrypt.sh" "$@"
+            "${MODULES_DIR}/encrypt.sh" "$@"
             ;;
         decrypt|dec)
-            "$MODULES_DIR/decrypt.sh" "$@"
+            "${MODULES_DIR}/decrypt.sh" "$@"
             ;;
         secrets|secret|sec)
-            "$MODULES_DIR/secrets.sh" "$@"
+            "${MODULES_DIR}/secrets.sh" "$@"
             ;;
         keys|key)
-            "$MODULES_DIR/keys.sh" "$@"
+            "${MODULES_DIR}/keys.sh" "$@"
             ;;
         export|import|share)
-            "$MODULES_DIR/export.sh" "$@"
+            "${MODULES_DIR}/export.sh" "$@"
             ;;
         backup|sync)
-            "$MODULES_DIR/backup.sh" "$@"
+            "${MODULES_DIR}/backup.sh" "$@"
             ;;
         *)
-            error_exit "Unknown module: $module"
+            error_exit "Unknown module: ${module}"
             ;;
     esac
 }
@@ -45,33 +45,33 @@ handle_legacy_command() {
     local command="$1"
     shift
     
-    case "$command" in
+    case "${command}" in
         encrypt)
-            "$MODULES_DIR/encrypt.sh" file "$@"
+            "${MODULES_DIR}/encrypt.sh" file "$@"
             ;;
         decrypt)
-            "$MODULES_DIR/decrypt.sh" file "$@"
+            "${MODULES_DIR}/decrypt.sh" file "$@"
             ;;
         store)
-            "$MODULES_DIR/secrets.sh" store "$@"
+            "${MODULES_DIR}/secrets.sh" store "$@"
             ;;
         get)
-            "$MODULES_DIR/secrets.sh" get "$@"
+            "${MODULES_DIR}/secrets.sh" get "$@"
             ;;
         list)
-            "$MODULES_DIR/secrets.sh" list "$@"
+            "${MODULES_DIR}/secrets.sh" list "$@"
             ;;
         generate-key)
-            "$MODULES_DIR/keys.sh" generate "$@"
+            "${MODULES_DIR}/keys.sh" generate "$@"
             ;;
         rotate-keys)
-            "$MODULES_DIR/keys.sh" rotate
+            "${MODULES_DIR}/keys.sh" rotate
             ;;
         backup)
-            "$MODULES_DIR/backup.sh" create "$@"
+            "${MODULES_DIR}/backup.sh" create "$@"
             ;;
         restore)
-            "$MODULES_DIR/backup.sh" restore "$@"
+            "${MODULES_DIR}/backup.sh" restore "$@"
             ;;
         *)
             return 1
@@ -85,15 +85,15 @@ check_modules() {
     local missing=0
     
     for module in encrypt decrypt secrets keys export backup; do
-        if [ ! -x "$MODULES_DIR/${module}.sh" ]; then
-            chmod +x "$MODULES_DIR/${module}.sh" 2>/dev/null || {
+        if [ ! -x "${MODULES_DIR}/${module}.sh" ]; then
+            chmod +x "${MODULES_DIR}/${module}.sh" 2>/dev/null || {
                 warning_msg "Module not executable: ${module}.sh"
                 ((missing++))
             }
         fi
     done
     
-    [ $missing -gt 0 ] && error_exit "Some modules are not properly installed"
+    [ "${missing}" -gt 0 ] && error_exit "Some modules are not properly installed"
 }
 
 # Export functions for use by main script

@@ -9,12 +9,12 @@ source "$(dirname "$0")/../lib/common.sh"
 decompress_data() {
     local compression_type="${1:-gzip}"
     
-    case "$compression_type" in
+    case "${compression_type}" in
         gzip)  gzip -dc ;;
         bzip2) bzip2 -dc ;;
         xz)    xz -dc ;;
         none)  cat ;;
-        *)     error_exit "Unknown compression: $compression_type" ;;
+        *)     error_exit "Unknown compression: ${compression_type}" ;;
     esac
 }
 
@@ -22,36 +22,36 @@ decompress_data() {
 decrypt_file() {
     local input_file="$1"
     local output_file="${2:-${input_file%.enc}}"
-    local key_file="${3:-$KEYS_DIR/default.key}"
+    local key_file="${3:-${KEYS_DIR}/default.key}"
     local compression="${4:-none}"
     
-    [ -f "$input_file" ] || error_exit "File not found: $input_file"
-    [ -f "$key_file" ] || error_exit "Key not found: $key_file"
+    [ -f "${input_file}" ] || error_exit "File not found: ${input_file}"
+    [ -f "${key_file}" ] || error_exit "Key not found: ${key_file}"
     
-    show_progress "$input_file"
-    info_msg "Decrypting: $input_file"
+    show_progress "${input_file}"
+    info_msg "Decrypting: ${input_file}"
     
     # Decrypt and decompress
-    openssl enc -aes-256-cbc -d -in "$input_file" -pass file:"$key_file" | \
-        decompress_data "$compression" > "$output_file"
-    
-    if [ $? -eq 0 ]; then
+    if openssl enc -aes-256-cbc -d -in "${input_file}" -pass file:"${key_file}" | \
+        decompress_data "${compression}" > "${output_file}"; then
         # Verify checksum if exists
         if [ -f "${input_file}.sha256" ]; then
-            local expected=$(cat "${input_file}.sha256")
-            local actual=$(sha256sum "$output_file" | cut -d' ' -f1)
+            local expected
+            expected=$(cat "${input_file}.sha256")
+            local actual
+            actual=$(sha256sum "${output_file}" | cut -d' ' -f1)
             
-            if [ "$expected" = "$actual" ]; then
+            if [ "${expected}" = "${actual}" ]; then
                 success_msg "Checksum verified"
             else
-                rm -f "$output_file"
+                rm -f "${output_file}"
                 error_exit "Checksum mismatch!"
             fi
         fi
         
-        audit_log "DECRYPT: $input_file -> $output_file"
-        add_history "DECRYPT $input_file"
-        success_msg "Decrypted: $output_file"
+        audit_log "DECRYPT: ${input_file} -> ${output_file}"
+        add_history "DECRYPT ${input_file}"
+        success_msg "Decrypted: ${output_file}"
         return 0
     else
         error_exit "Decryption failed"
@@ -64,15 +64,13 @@ decrypt_password() {
     local output_file="${2:-${input_file%.enc}}"
     local compression="${3:-gzip}"
     
-    [ -f "$input_file" ] || error_exit "File not found: $input_file"
+    [ -f "${input_file}" ] || error_exit "File not found: ${input_file}"
     
-    info_msg "Password-based decryption: $input_file"
+    info_msg "Password-based decryption: ${input_file}"
     
-    gpg --decrypt "$input_file" | decompress_data "$compression" > "$output_file"
-    
-    if [ $? -eq 0 ]; then
-        audit_log "DECRYPT_PASSWORD: $input_file -> $output_file"
-        success_msg "Decrypted with password: $output_file"
+    if gpg --decrypt "${input_file}" | decompress_data "${compression}" > "${output_file}"; then
+        audit_log "DECRYPT_PASSWORD: ${input_file} -> ${output_file}"
+        success_msg "Decrypted with password: ${output_file}"
         return 0
     else
         error_exit "Password decryption failed"
@@ -83,26 +81,23 @@ decrypt_password() {
 decrypt_two_factor() {
     local input_file="$1"
     local output_file="${2:-${input_file%.2fa.enc}}"
-    local key_file="${3:-$KEYS_DIR/default.key}"
+    local key_file="${3:-${KEYS_DIR}/default.key}"
     
-    [ -f "$input_file" ] || error_exit "File not found: $input_file"
-    [ -f "$key_file" ] || error_exit "Key not found: $key_file"
+    [ -f "${input_file}" ] || error_exit "File not found: ${input_file}"
+    [ -f "${key_file}" ] || error_exit "Key not found: ${key_file}"
     
-    info_msg "Two-factor decryption: $input_file"
+    info_msg "Two-factor decryption: ${input_file}"
     
     # First pass: password-based
     local temp_file="/tmp/2fa_temp_$$.enc"
     warning_msg "Enter password for first factor:"
-    gpg --decrypt --output "$temp_file" "$input_file"
+    gpg --decrypt --output "${temp_file}" "${input_file}"
     
     # Second pass: key-based
-    openssl enc -aes-256-cbc -d -in "$temp_file" -out "$output_file" -pass file:"$key_file"
-    
-    # Cleanup
-    shred -vzu "$temp_file" 2>/dev/null || rm -f "$temp_file"
-    
-    if [ $? -eq 0 ]; then
-        audit_log "2FA_DECRYPT: $input_file -> $output_file"
+    if openssl enc -aes-256-cbc -d -in "${temp_file}" -out "${output_file}" -pass file:"${key_file}"; then
+        # Cleanup
+        shred -vzu "${temp_file}" 2>/dev/null || rm -f "${temp_file}"
+        audit_log "2FA_DECRYPT: ${input_file} -> ${output_file}"
         success_msg "Two-factor decryption complete"
         return 0
     else
@@ -112,17 +107,17 @@ decrypt_two_factor() {
 
 # Stream decryption
 decrypt_stream() {
-    local key_file="${1:-$KEYS_DIR/default.key}"
+    local key_file="${1:-${KEYS_DIR}/default.key}"
     local use_password="${2:-false}"
     
     verbose_output "Stream decrypting from stdin"
     audit_log "STREAM_DECRYPT: stdin"
     
-    if [ "$use_password" = "true" ]; then
+    if [ "${use_password}" = "true" ]; then
         gpg --decrypt
     else
-        [ -f "$key_file" ] || error_exit "Key not found: $key_file"
-        openssl enc -aes-256-cbc -d -pass file:"$key_file"
+        [ -f "${key_file}" ] || error_exit "Key not found: ${key_file}"
+        openssl enc -aes-256-cbc -d -pass file:"${key_file}"
     fi
 }
 
@@ -133,28 +128,25 @@ decrypt_multi() {
     local output_file="${3:-${input_file%.multi.enc}}"
     
     [ -f "${input_file}.data" ] || error_exit "Encrypted data not found: ${input_file}.data"
-    [ -f "${input_file}.key.${key_name}" ] || error_exit "Encrypted key not found for: $key_name"
+    [ -f "${input_file}.key.${key_name}" ] || error_exit "Encrypted key not found for: ${key_name}"
     
-    info_msg "Multi-recipient decryption: $input_file"
+    info_msg "Multi-recipient decryption: ${input_file}"
     
     # Decrypt session key
     local session_key_file="/tmp/session_$$.key"
-    local private_key="$KEYS_DIR/${key_name}.pem"
+    local private_key="${KEYS_DIR}/${key_name}.pem"
     
-    [ -f "$private_key" ] || error_exit "Private key not found: $private_key"
+    [ -f "${private_key}" ] || error_exit "Private key not found: ${private_key}"
     
-    openssl rsautl -decrypt -inkey "$private_key" \
-        -in "${input_file}.key.${key_name}" -out "$session_key_file"
+    openssl rsautl -decrypt -inkey "${private_key}" \
+        -in "${input_file}.key.${key_name}" -out "${session_key_file}"
     
     # Decrypt file with session key
-    openssl enc -aes-256-cbc -d -in "${input_file}.data" -out "$output_file" \
-        -pass file:"$session_key_file"
-    
-    # Cleanup
-    shred -vzu "$session_key_file" 2>/dev/null || rm -f "$session_key_file"
-    
-    if [ $? -eq 0 ]; then
-        audit_log "MULTI_DECRYPT: $input_file -> $output_file"
+    if openssl enc -aes-256-cbc -d -in "${input_file}.data" -out "${output_file}" \
+        -pass file:"${session_key_file}"; then
+        # Cleanup
+        shred -vzu "${session_key_file}" 2>/dev/null || rm -f "${session_key_file}"
+        audit_log "MULTI_DECRYPT: ${input_file} -> ${output_file}"
         success_msg "Multi-recipient decryption complete"
         return 0
     else
@@ -166,20 +158,18 @@ decrypt_multi() {
 decrypt_directory() {
     local input="$1"
     local output_dir="${2:-.}"
-    local key_file="${3:-$KEYS_DIR/default.key}"
+    local key_file="${3:-${KEYS_DIR}/default.key}"
     
-    [ -f "$input" ] || error_exit "File not found: $input"
-    [ -f "$key_file" ] || error_exit "Key not found: $key_file"
+    [ -f "${input}" ] || error_exit "File not found: ${input}"
+    [ -f "${key_file}" ] || error_exit "Key not found: ${key_file}"
     
-    info_msg "Decrypting directory archive: $input"
+    info_msg "Decrypting directory archive: ${input}"
     
     # Decrypt and extract
-    openssl enc -aes-256-cbc -d -in "$input" -pass file:"$key_file" | \
-        tar xzf - -C "$output_dir"
-    
-    if [ $? -eq 0 ]; then
-        audit_log "DECRYPT_DIR: $input -> $output_dir"
-        success_msg "Directory decrypted to: $output_dir"
+    if openssl enc -aes-256-cbc -d -in "${input}" -pass file:"${key_file}" | \
+        tar xzf - -C "${output_dir}"; then
+        audit_log "DECRYPT_DIR: ${input} -> ${output_dir}"
+        success_msg "Directory decrypted to: ${output_dir}"
         return 0
     else
         error_exit "Directory decryption failed"
@@ -191,19 +181,17 @@ verify_signature() {
     local file="$1"
     local sig_file="${file}.sig"
     
-    [ -f "$file" ] || error_exit "File not found: $file"
-    [ -f "$sig_file" ] || error_exit "Signature not found: $sig_file"
+    [ -f "${file}" ] || error_exit "File not found: ${file}"
+    [ -f "${sig_file}" ] || error_exit "Signature not found: ${sig_file}"
     
-    info_msg "Verifying signature: $file"
+    info_msg "Verifying signature: ${file}"
     
-    gpg --verify "$sig_file" "$file"
-    
-    if [ $? -eq 0 ]; then
-        audit_log "VERIFY: $file - VALID"
+    if gpg --verify "${sig_file}" "${file}"; then
+        audit_log "VERIFY: ${file} - VALID"
         success_msg "Signature valid"
         return 0
     else
-        audit_log "VERIFY: $file - INVALID"
+        audit_log "VERIFY: ${file} - INVALID"
         error_exit "Signature invalid"
     fi
 }
