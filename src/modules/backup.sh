@@ -1,5 +1,5 @@
 #!/bin/bash
-# ADE-Crypt Backup & Sync Module  
+# ADE crypt Backup & Sync Module  
 # Handles backups, restore, and cloud synchronization
 
 # Source common library

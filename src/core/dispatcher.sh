@@ -1,5 +1,5 @@
 #!/bin/bash
-# ADE-Crypt Core Dispatcher
+# ADE crypt Core Dispatcher
 # Main logic for command routing and module loading
 
 # Get base directory (two levels up from core)

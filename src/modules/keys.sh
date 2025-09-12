@@ -1,5 +1,5 @@
 #!/bin/bash
-# ADE-Crypt Key Management Module
+# ADE crypt Key Management Module
 # Handles key generation, rotation, and lifecycle
 
 # Source common library

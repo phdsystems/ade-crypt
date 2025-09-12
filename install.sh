@@ -14,7 +14,7 @@ INSTALL_DIR="/usr/local"
 SCRIPT_NAME="ade-crypt"
 REPO_URL="https://github.com/phdsystems/ade-crypt"
 
-echo -e "${GREEN}Installing ADE-Crypt Modular...${NC}"
+echo -e "${GREEN}Installing ADE crypt...${NC}"
 
 # Check for required dependencies
 echo "Checking dependencies..."
@@ -91,7 +91,7 @@ mkdir -p ~/.ade
 
 # Verify installation
 if command -v $SCRIPT_NAME &> /dev/null; then
-    echo -e "${GREEN}✓ ADE-Crypt installed successfully!${NC}"
+    echo -e "${GREEN}✓ ADE crypt installed successfully!${NC}"
     echo ""
     echo -e "${CYAN}Installation location:${NC}"
     echo "  Binary:  $INSTALL_DIR/bin/ade-crypt"

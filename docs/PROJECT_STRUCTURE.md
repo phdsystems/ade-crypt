@@ -1,4 +1,4 @@
-# ADE-Crypt Project Structure
+# ADE crypt Project Structure
 
 ## Directory Layout
 

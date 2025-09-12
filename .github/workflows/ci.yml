@@ -1,4 +1,4 @@
-name: CI
+name: ADE crypt CI
 
 on:
   push:

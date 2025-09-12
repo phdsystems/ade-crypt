@@ -1,5 +1,5 @@
 #!/bin/bash
-# ADE-Crypt Decryption Module
+# ADE crypt Decryption Module
 # Handles file and directory decryption operations
 
 # Source common library

@@ -1,8 +1,8 @@
-# ADE-Crypt Modular Architecture
+# ADE crypt Modular Architecture
 
 ## Overview
 
-ADE-Crypt v2.1 introduces a modular architecture that breaks down the monolithic script into specialized, maintainable components.
+ADE crypt v2.1 introduces a modular architecture that breaks down the monolithic script into specialized, maintainable components for the Agentic Development Environment.
 
 ## Architecture
 

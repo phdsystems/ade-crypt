@@ -1,5 +1,5 @@
 #!/bin/bash
-# ADE-Crypt Help System
+# ADE crypt Help System
 # Provides help and documentation
 
 # Get base directory
@@ -8,13 +8,13 @@ source "$BASE_DIR/src/lib/common.sh"
 
 # Show version
 show_version() {
-    echo "ADE-Crypt v$VERSION"
-    echo "Modular encryption utility with enterprise features"
+    echo "$PRODUCT_NAME v$VERSION"
+    echo "$PRODUCT_DESCRIPTION"
 }
 
 # Show main help
 show_help() {
-    echo -e "${BOLD}${CYAN}ADE-Crypt v$VERSION${NC}"
+    echo -e "${BOLD}${CYAN}$PRODUCT_NAME v$VERSION${NC}"
     echo ""
     echo "Usage: ade-crypt <module> <command> [options]"
     echo ""

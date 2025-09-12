@@ -1,9 +1,11 @@
 #!/bin/bash
-# ADE-Crypt Common Library
+# ADE crypt Common Library
 # Shared functions and variables for all modules
 
 # Version
 export VERSION="2.1.0"
+export PRODUCT_NAME="ADE crypt"
+export PRODUCT_DESCRIPTION="Agentic Development Environment encryption utility"
 
 # Colors
 export GREEN='\033[0;32m'

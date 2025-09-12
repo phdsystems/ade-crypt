@@ -1,5 +1,5 @@
 #!/bin/bash
-# ADE-Crypt Export/Import Module
+# ADE crypt Export/Import Module
 # Handles various export and import formats
 
 # Source common library

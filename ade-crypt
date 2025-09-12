@@ -1,6 +1,6 @@
 #!/bin/bash
-# ADE-Crypt - Main Executable
-# This is the user-facing script that calls into src
+# ADE crypt - Main Executable
+# This is the user-facing script for the Agentic Development Environment
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

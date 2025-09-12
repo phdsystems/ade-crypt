@@ -1,5 +1,5 @@
 #!/bin/bash
-# ADE-Crypt Secrets Management Module
+# ADE crypt Secrets Management Module
 # Handles secret storage, retrieval, and management
 
 # Source common library

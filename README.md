@@ -1,6 +1,6 @@
-# ADE-Crypt
+# ADE crypt
 
-Advanced modular encryption utility with enterprise features, cloud sync, and comprehensive secret management.
+Advanced modular encryption utility for Agentic Development Environment with enterprise features, cloud sync, and comprehensive secret management.
 
 ## Quick Start
 

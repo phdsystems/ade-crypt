@@ -1,4 +1,4 @@
-# ADE-Crypt Enhanced Documentation v2.0
+# ADE crypt Documentation v2.1
 
 ## Table of Contents
 
@@ -14,7 +14,7 @@
 
 ## Overview
 
-ADE-Crypt Enhanced v2.0 is a comprehensive encryption utility that provides secure file and directory encryption, advanced secrets management, multi-recipient encryption, cloud synchronization, and enterprise-grade security features. Originally developed as part of PHD-ADE, it now stands as a powerful standalone security tool.
+ADE crypt is a comprehensive encryption utility for Agentic Development Environment that provides secure file and directory encryption, advanced secrets management, multi-recipient encryption, cloud synchronization, and enterprise-grade security features. Built with AI-assisted development principles, it stands as a powerful security tool for modern development workflows.
 
 ### Key Features
 
