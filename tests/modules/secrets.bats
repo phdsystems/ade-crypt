@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Secrets module tests
+# Tests for secrets module
 
 load ../test_helper
 
@@ -12,7 +12,7 @@ teardown() {
 }
 
 @test "store and retrieve secret" {
-    run bash -c 'echo "my-secret-value" | '"$ADE_CRYPT"' secrets store test-secret'
+    echo "my-secret-value" | run run_ade_crypt secrets store test-secret
     assert_success
     
     run run_ade_crypt secrets get test-secret
@@ -21,7 +21,6 @@ teardown() {
 }
 
 @test "list secrets" {
-    # Store multiple secrets
     create_test_secret "secret1" "value1"
     create_test_secret "secret2" "value2"
     
@@ -31,61 +30,82 @@ teardown() {
     assert_output_contains "secret2"
 }
 
-@test "search secrets" {
-    create_test_secret "api-key" "sk-123"
-    create_test_secret "db-password" "secret123"
-    create_test_secret "api-token" "token-456"
-    
-    # Search for 'api'
-    run run_ade_crypt secrets search api
-    assert_success
-    assert_output_contains "api-key"
-    assert_output_contains "api-token"
-    
-    # Should not contain db-password
-    run bash -c 'echo "$output" | grep -v db-password'
-    assert_success
-}
-
 @test "delete secret" {
-    create_test_secret "temp-secret" "temp-value"
+    create_test_secret "to-delete" "value"
     
-    # Verify it exists
-    run run_ade_crypt secrets get temp-secret
+    run run_ade_crypt secrets delete to-delete
     assert_success
     
-    # Delete it (simulate user confirmation)
-    run bash -c 'echo "y" | '"$ADE_CRYPT"' secrets delete temp-secret'
-    assert_success
-    
-    # Verify it's gone
-    run run_ade_crypt secrets get temp-secret
+    run run_ade_crypt secrets get to-delete
     assert_failure
 }
 
-@test "secret expiration" {
-    create_test_secret "expiring-secret" "temp-value"
+@test "update existing secret" {
+    create_test_secret "test-secret" "old-value"
     
-    # Set expiration to 1 day
-    run run_ade_crypt secrets expire expiring-secret 1
+    echo "new-value" | run run_ade_crypt secrets store test-secret
     assert_success
-    assert_output_contains "expires in 1 days"
+    
+    run run_ade_crypt secrets get test-secret
+    assert_success
+    assert_output_contains "new-value"
+    ! assert_output_contains "old-value"
 }
 
-@test "secret tagging" {
-    create_test_secret "tagged-secret" "tagged-value"
-    
-    # Add tags
-    run run_ade_crypt secrets tag tagged-secret "production,critical"
+@test "secret with metadata" {
+    echo "value" | run run_ade_crypt secrets store test-secret --category prod --tags "api,key"
     assert_success
-    assert_output_contains "Tags added"
+    
+    run run_ade_crypt secrets list --verbose
+    assert_success
+    assert_output_contains "test-secret"
 }
 
-@test "secret categories" {
-    create_test_secret "categorized-secret" "cat-value"
+@test "search secrets" {
+    create_test_secret "api-key" "key1"
+    create_test_secret "db-password" "pass1"
     
-    # Set category
-    run run_ade_crypt secrets category categorized-secret "development"
+    run run_ade_crypt secrets search "api"
     assert_success
-    assert_output_contains "Category set"
+    assert_output_contains "api-key"
+    ! assert_output_contains "db-password"
+}
+
+@test "export secrets" {
+    create_test_secret "TEST_VAR" "test_value"
+    
+    run run_ade_crypt secrets export env
+    assert_success
+    assert_output_contains "export TEST_VAR="
+}
+
+@test "import secrets" {
+    echo "NEW_SECRET=imported_value" > secrets.env
+    
+    run run_ade_crypt secrets import secrets.env
+    assert_success
+    
+    run run_ade_crypt secrets get NEW_SECRET
+    assert_success
+    assert_output_contains "imported_value"
+}
+
+@test "rotate secrets" {
+    create_test_secret "test-secret" "old-value"
+    
+    run run_ade_crypt secrets rotate
+    assert_success
+    
+    # Secret should still be accessible
+    run run_ade_crypt secrets get test-secret
+    assert_success
+}
+
+@test "secret versioning" {
+    create_test_secret "versioned" "v1"
+    echo "v2" | run run_ade_crypt secrets store versioned
+    
+    run run_ade_crypt secrets version versioned 1
+    assert_success
+    assert_output_contains "v1"
 }

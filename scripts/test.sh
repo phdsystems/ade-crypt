@@ -89,7 +89,13 @@ if [ $# -gt 0 ]; then
 else
     # Run all tests
     echo -e "${CYAN}Running all tests...${NC}"
-    bats "${BATS_OPTIONS[@]}" tests/
+    # Find all test files and run them
+    test_files=$(find tests -name "*.bats" -type f | sort)
+    if [ -z "$test_files" ]; then
+        echo -e "${RED}No test files found in tests/ directory${NC}"
+        exit 1
+    fi
+    bats "${BATS_OPTIONS[@]}" $test_files
 fi
 
 echo ""

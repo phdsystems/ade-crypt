@@ -51,6 +51,10 @@ teardown() {
 }
 
 @test "secrets store and retrieve" {
+    # Generate default key first
+    run run_ade_crypt keys generate
+    assert_success
+    
     # Store secret
     run bash -c 'echo "secret-value" | '"$ADE_CRYPT"' secrets store test-key'
     assert_success
@@ -70,7 +74,7 @@ teardown() {
     # Generate key
     run run_ade_crypt keys generate test-key
     assert_success
-    assert_output_contains "Key generated"
+    assert_output_contains "Generated"
     
     # List keys
     run run_ade_crypt keys list

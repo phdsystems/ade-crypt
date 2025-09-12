@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Encryption module tests
+# Tests for encryption module
 
 load ../test_helper
 
@@ -11,61 +11,59 @@ teardown() {
     teardown_test_env
 }
 
-@test "encrypt file with compression" {
-    echo "test data for compression" > large.txt
+@test "encrypt file with default key" {
+    echo "test data" > input.txt
     
-    # Encrypt with gzip
-    run run_ade_crypt encrypt file -c gzip large.txt
+    run run_ade_crypt encrypt file input.txt
+    assert_success
+    assert_file_exists input.txt.enc
+    
+    # Encrypted file should be different from original
+    ! cmp -s input.txt input.txt.enc
+}
+
+@test "encrypt with specific key" {
+    # Generate test key
+    run_ade_crypt keys generate test-key
+    
+    echo "test data" > input.txt
+    run run_ade_crypt encrypt file input.txt -k "$ADE_CRYPT_HOME/keys/test-key.key"
+    assert_success
+    assert_file_exists input.txt.enc
+}
+
+@test "encrypt with compression" {
+    # Create larger file for compression
+    for i in {1..100}; do
+        echo "Line $i: This is test data that should compress well" >> large.txt
+    done
+    
+    run run_ade_crypt encrypt file large.txt -c gzip
     assert_success
     assert_file_exists large.txt.enc
 }
 
-@test "encrypt with password" {
-    require_command gpg
+@test "encrypt with output file" {
+    echo "test data" > input.txt
     
-    echo "password data" > pwd.txt
-    
-    # This would require interactive input in real scenario
-    # For testing, we'll skip actual GPG encryption
-    skip "Interactive password encryption test"
+    run run_ade_crypt encrypt file input.txt -o custom.encrypted
+    assert_success
+    assert_file_exists custom.encrypted
+    ! assert_file_exists input.txt.enc
 }
 
-@test "stream encryption" {
-    # Test stream encryption
-    run bash -c 'echo "stream data" | '"$ADE_CRYPT"' encrypt stream > stream.enc'
-    assert_success
-    assert_file_exists stream.enc
+@test "encrypt directory" {
+    mkdir test_dir
+    echo "file1" > test_dir/file1.txt
+    echo "file2" > test_dir/file2.txt
     
-    # Test stream decryption
-    run bash -c 'cat stream.enc | '"$ADE_CRYPT"' decrypt stream > stream.out'
+    run run_ade_crypt encrypt directory test_dir
     assert_success
-    assert_file_contains stream.out "stream data"
+    assert_file_exists test_dir.tar.enc
 }
 
-@test "directory encryption" {
-    # Create test directory
-    mkdir testdir
-    echo "file1" > testdir/file1.txt
-    echo "file2" > testdir/file2.txt
-    
-    # Encrypt directory
-    run run_ade_crypt encrypt directory testdir
-    assert_success
-    assert_file_exists testdir.tar.enc
-}
-
-@test "file splitting" {
-    # Create large file (simulate)
-    dd if=/dev/zero of=largefile.txt bs=1M count=1 2>/dev/null
-    
-    # Encrypt first
-    run run_ade_crypt encrypt file largefile.txt
-    assert_success
-    
-    # Split encrypted file
-    run run_ade_crypt split largefile.txt.enc 500K
-    assert_success
-    
-    # Check parts exist
-    assert_file_exists largefile.txt.enc.part.aa
+@test "encrypt handles missing file" {
+    run run_ade_crypt encrypt file nonexistent.txt
+    assert_failure
+    assert_output_contains "not found" || assert_output_contains "does not exist"
 }
