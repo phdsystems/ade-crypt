@@ -31,7 +31,9 @@ ade-crypt keys generate project-key
 - 📦 **Secret management** with versioning
 - 🎯 **Modular architecture** for extensibility
 - 📚 **Standalone library** for integration
-- 🧪 **Comprehensive testing** with BATS
+- 🧪 **Comprehensive testing** with 120+ tests
+- 🔒 **Security auditing** and automated fixes
+- ⚡ **Performance monitoring** with benchmarks
 
 ## Installation
 
@@ -56,7 +58,10 @@ See [Installation Guide](docs/INSTALLATION.md) for more options.
 | [Architecture](docs/ARCHITECTURE.md) | Technical design and structure |
 | [API Reference](docs/API_REFERENCE.md) | Module and function documentation |
 | [Testing](docs/TESTING.md) | Testing and quality assurance |
+| [Development](docs/DEVELOPMENT.md) | Development guidelines and workflow |
+| [Security](docs/SECURITY.md) | Security best practices |
 | [Library Usage](lib/README.md) | Standalone library integration |
+| [Changelog](CHANGELOG.md) | Version history and changes |
 
 ## Usage Examples
 
@@ -110,13 +115,20 @@ make setup
 
 ### Testing
 ```bash
-make test        # Run tests
-make lint        # Run linting
-make coverage    # Generate coverage
+make test        # Run all tests
+make lint        # Run ShellCheck linting
+make coverage    # Generate coverage report
+make security    # Run security audit
 make ci          # Full CI pipeline
 ```
 
-See [Development Guide](docs/DEVELOPMENT.md) for details.
+**Test Coverage**: 120+ tests across 12 test files
+- Unit tests for core modules
+- Integration tests for workflows
+- Security vulnerability tests
+- Performance benchmarks
+
+See [Testing Guide](docs/TESTING.md) for details.
 
 ## Project Structure
 

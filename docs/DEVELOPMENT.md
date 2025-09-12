@@ -45,14 +45,23 @@ vim src/modules/mymodule.sh
 ### 2. Run Tests
 
 ```bash
-# Run all tests
+# Run all tests (120+ tests)
 make test
 
-# Run specific test
+# Run specific test file
 ./scripts/test.sh basic.bats
+
+# Run module tests
+bats tests/modules/*.bats
+
+# Run script tests
+bats tests/scripts/*.bats
 
 # Run with verbose output
 VERBOSE=true make test
+
+# Get test summary
+./scripts/test-summary.sh
 ```
 
 ### 3. Lint Code
@@ -88,11 +97,21 @@ make ci
 
 ```bash
 make help        # Show all available targets
-make test        # Run all tests
+make test        # Run all 120+ tests
 make lint        # Run ShellCheck linting
 make coverage    # Generate coverage report
 make ci          # Full CI pipeline
 make dev         # Quick dev cycle (lint + test)
+```
+
+### Security & Quality Commands
+
+```bash
+make security    # Run security vulnerability scan
+make performance # Run performance benchmarks
+make fix-security # Auto-fix common security issues
+make all-checks  # Run ALL quality checks (lint + test + security + performance)
+make metrics     # Show code metrics and statistics
 ```
 
 ### Setup Commands
@@ -234,6 +253,13 @@ export -f my_utility_function
 ```
 
 ## Testing
+
+### Test Coverage Overview
+
+- **Total Tests**: 120+ tests across 12 test files
+- **Script Coverage**: 8/11 scripts tested (73%)
+- **Module Coverage**: 3/6 modules tested (50%)
+- **Line Coverage**: 16.19% (397/2452 lines)
 
 ### Writing Tests
 

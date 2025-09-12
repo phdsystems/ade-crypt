@@ -37,16 +37,23 @@ ADE crypt uses a comprehensive testing and quality assurance pipeline with indus
 ADE crypt provides convenient make targets for all testing and development tasks:
 
 ```bash
-# Testing
-make test        # Run all tests via BATS
+# Core Testing
+make test        # Run all 120+ tests via BATS
 make lint        # Run ShellCheck linting  
 make coverage    # Generate coverage report
-make ci          # Full CI pipeline (lint + test + integration)
+make ci          # Full CI pipeline (lint + test + security)
 make dev         # Quick development cycle (lint + test)
 
-# Environment
+# Security & Performance
+make security    # Run security vulnerability scan
+make performance # Run performance benchmarks
+make fix-security # Auto-fix common security issues
+make all-checks  # Run ALL quality checks
+
+# Environment & Tools
 make setup       # Set up development environment
 make check-deps  # Check all dependencies
+make install-security-tools # Install security scanners
 make clean       # Clean temporary files
 make help        # Show all available targets
 ```
@@ -94,11 +101,23 @@ open coverage/index.html
 ```
 tests/
 ├── test_helper.bash      # Common test functions
-├── basic.bats           # Basic functionality tests
-└── modules/             # Module-specific tests
-    ├── encrypt.bats
-    └── secrets.bats
+├── basic.bats           # Basic functionality tests (6 tests)
+├── modules/             # Module-specific tests
+│   ├── encrypt.bats     # Encryption tests (6 tests)
+│   ├── decrypt.bats     # Decryption tests (6 tests)
+│   └── secrets.bats     # Secret management tests (10 tests)
+└── scripts/             # Script-specific tests
+    ├── check-deps.bats  # Dependency checker tests (14 tests)
+    ├── coverage.bats    # Coverage tool tests (10 tests)
+    ├── fix-security.bats # Security fixer tests (11 tests)
+    ├── install-security-tools.bats # Installer tests (10 tests)
+    ├── lint.bats        # Linting tests (12 tests)
+    ├── performance-test.bats # Performance tests (10 tests)
+    ├── security-audit.bats # Security audit tests (10 tests)
+    └── test.bats        # Test runner tests (15 tests)
 ```
+
+**Total**: 120+ tests across 12 test files
 
 ## Writing Tests
 
@@ -244,6 +263,12 @@ gem install bashcov
 # Generate report
 ./scripts/coverage.sh
 ```
+
+### Coverage Status
+- **Current Coverage**: 16.19% line coverage (397/2452 lines)
+- **Test Files**: 12 test files with 120+ tests
+- **Script Coverage**: 8/11 scripts tested (73%)
+- **Module Coverage**: 3/6 modules tested (50%)
 
 ### Coverage Targets
 - **Unit Tests**: >80% line coverage
