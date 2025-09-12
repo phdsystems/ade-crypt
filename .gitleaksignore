@@ -1,0 +1,22 @@
+# Gitleaks ignore file for false positives
+# These are variable names, not actual secrets
+
+# Variable assignments that are not actual secrets
+src/modules/encrypt.sh:*use_password*
+src/modules/decrypt.sh:*use_password*
+src/modules/decrypt.sh:*private_key="${KEYS_DIR}*
+src/modules/keys.sh:*new_key="${KEYS_DIR}*
+
+# Test files can have example secrets
+tests/**
+*.bats
+
+# Documentation can have examples
+docs/**
+README.md
+
+# Scripts that install tools
+scripts/install-*.sh
+
+# The gitleaks config itself
+.gitleaks.toml

@@ -172,15 +172,7 @@ secrets:
 # Auto-fix security issues where possible
 fix-security:
 	@echo "🔧 Auto-fixing security issues..."
-	@echo "Converting predictable temp files to mktemp..."
-	@find src -name "*.sh" -exec sed -i 's|/tmp/[a-zA-Z_]*\$$|$$(mktemp /tmp/XXXXXX)|g' {} \;
-	@echo "✓ Fixed predictable temp files"
-	@echo ""
-	@echo "⚠️  Manual fixes still needed for:"
-	@echo "  - Add trap handlers for cleanup"
-	@echo "  - Replace rm -f with shred for sensitive files"
-	@echo ""
-	@echo "Run 'make security' to verify fixes"
+	@./scripts/fix-security.sh
 
 # ============================================================================
 # PERFORMANCE ANALYSIS TARGETS

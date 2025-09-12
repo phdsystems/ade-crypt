@@ -83,7 +83,9 @@ echo ""
 
 # 4. Check for hardcoded secrets patterns (IMPORTANT)
 echo -e "${CYAN}[4/7] Scanning for potential hardcoded secrets...${NC}"
-SECRET_PATTERNS=$(grep -riE '(password|passwd|pwd|secret|key|token|api_key|apikey|auth|credential)(\s*)=(\s*)["'"'"'][^"'"'"']+["'"'"']' --include="*.sh" src/ 2>/dev/null || true)
+# Exclude false positives: variable names, paths, and boolean values
+SECRET_PATTERNS=$(grep -riE '(password|passwd|pwd|secret|key|token|api_key|apikey|auth|credential)(\s*)=(\s*)["'"'"'][^"'"'"']+["'"'"']' --include="*.sh" src/ 2>/dev/null | \
+    grep -v '="${[A-Z_]*}\|:-false}\|:-true}\|/default\.key\|\.pem"\|use_password\|private_key="${KEYS_DIR}\|new_key="${KEYS_DIR}' || true)
 if [ -n "${SECRET_PATTERNS}" ]; then
     echo -e "${RED}✗ Potential hardcoded secrets found:${NC}"
     echo "${SECRET_PATTERNS}" | head -5 | while IFS= read -r line; do
