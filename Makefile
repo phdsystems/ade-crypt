@@ -100,7 +100,7 @@ ci: lint test
 release:
 	@echo "Preparing release package..."
 	@mkdir -p release/ade-crypt
-	@cp -r bin src docs ade-crypt install.sh LICENSE README.md release/ade-crypt/
+	@cp -r src docs scripts tests ade-crypt install.sh LICENSE README.md Makefile release/ade-crypt/
 	@cd release && tar czf ade-crypt-$$(date +%Y%m%d-%H%M%S).tar.gz ade-crypt/
 	@echo "✓ Release package created in release/"
 

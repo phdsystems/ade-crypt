@@ -4,8 +4,7 @@
 
 ```
 ade-crypt/
-├── bin/                    # Executable scripts
-│   └── ade-crypt          # Main executable
+├── ade-crypt               # Main executable
 │
 ├── src/                    # Source code
 │   ├── core/              # Core functionality
@@ -15,18 +14,13 @@ ade-crypt/
 │   ├── lib/               # Shared libraries
 │   │   └── common.sh      # Common functions
 │   │
-│   ├── modules/           # Feature modules
-│   │   ├── encrypt.sh     # Encryption operations
-│   │   ├── decrypt.sh     # Decryption operations
-│   │   ├── secrets.sh     # Secret management
-│   │   ├── keys.sh        # Key management
-│   │   ├── export.sh      # Import/Export
-│   │   └── backup.sh      # Backup & sync
-│   │
-│   └── legacy/            # Previous versions
-│       ├── ade-crypt      # v2.0 monolithic
-│       ├── ade-crypt.original # v1.0
-│       └── ade-crypt-modular # v2.1 transition
+│   └── modules/           # Feature modules
+│       ├── encrypt.sh     # Encryption operations
+│       ├── decrypt.sh     # Decryption operations
+│       ├── secrets.sh     # Secret management
+│       ├── keys.sh        # Key management
+│       ├── export.sh      # Import/Export
+│       └── backup.sh      # Backup & sync
 │
 ├── docs/                   # Documentation
 │   ├── DOCS.md            # Detailed documentation

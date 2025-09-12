@@ -164,6 +164,131 @@ add_history() {
     echo "$(date -Iseconds) $1" >> "$HISTORY_FILE"
 }
 
+# Common utility functions (consolidated from modules)
+
+# Calculate file checksum
+calculate_checksum() {
+    local file="$1"
+    [ -f "$file" ] || error_exit "Cannot calculate checksum: file not found: $file"
+    sha256sum "$file" | cut -d' ' -f1
+}
+
+# Verify file checksum
+verify_checksum() {
+    local file="$1"
+    local expected_checksum="$2"
+    local actual_checksum=$(calculate_checksum "$file")
+    [ "$expected_checksum" = "$actual_checksum" ]
+}
+
+# Get metadata field from JSON file
+get_metadata_field() {
+    local meta_file="$1"
+    local field="$2"
+    [ -f "$meta_file" ] || return 1
+    grep "\"$field\"" "$meta_file" | cut -d'"' -f4
+}
+
+# File validation helpers
+require_file() {
+    local file="$1"
+    local message="${2:-File not found: $file}"
+    [ -f "$file" ] || error_exit "$message"
+}
+
+require_key_file() {
+    local key_file="$1"
+    [ -f "$key_file" ] || error_exit "Key not found: $key_file. Generate with: ade-crypt keys generate"
+}
+
+require_secret() {
+    local secret_name="$1"
+    local secret_file="$SECRETS_DIR/$secret_name"
+    [ -f "$secret_file" ] || error_exit "Secret not found: $secret_name. Store with: ade-crypt secrets store $secret_name"
+}
+
+# Date helpers
+get_current_iso_date() {
+    date -Iseconds
+}
+
+get_expiry_date() {
+    local days="${1:-90}"
+    date -Iseconds -d "+${days} days" 2>/dev/null || date -Iseconds
+}
+
+# OpenSSL wrapper functions
+encrypt_with_key() {
+    local input="$1"
+    local output="$2"
+    local key_file="$3"
+    require_file "$input"
+    require_key_file "$key_file"
+    openssl enc -aes-256-cbc -salt -in "$input" -out "$output" -pass file:"$key_file"
+}
+
+decrypt_with_key() {
+    local input="$1"
+    local output="$2"
+    local key_file="$3"
+    require_file "$input"
+    require_key_file "$key_file"
+    openssl enc -aes-256-cbc -d -in "$input" -out "$output" -pass file:"$key_file"
+}
+
+# Secure file deletion
+secure_delete() {
+    local file="$1"
+    if [ -f "$file" ]; then
+        if command -v shred >/dev/null 2>&1; then
+            shred -vzu "$file" 2>/dev/null || rm -f "$file"
+        else
+            rm -f "$file"
+        fi
+        verbose_output "Securely deleted: $file"
+    fi
+}
+
+# Create secret metadata
+create_secret_metadata() {
+    local name="$1"
+    local category="${2:-general}"
+    local tags="$3"
+    local expiry_days="${4:-$SECRET_EXPIRY_DAYS}"
+    local checksum="$5"
+    local file="$6"
+    
+    cat > "$file" << EOF
+{
+    "name": "$name",
+    "created": "$(get_current_iso_date)",
+    "modified": "$(get_current_iso_date)",
+    "expires": "$(get_expiry_date "$expiry_days")",
+    "category": "$category",
+    "tags": "$tags",
+    "checksum": "$checksum"
+}
+EOF
+}
+
+# Create key metadata
+create_key_metadata() {
+    local name="$1"
+    local key_type="${2:-default}"
+    local expiry_days="${3:-$KEY_EXPIRY_DAYS}"
+    local file="$4"
+    
+    cat > "$file" << EOF
+{
+    "name": "$name",
+    "type": "$key_type", 
+    "created": "$(get_current_iso_date)",
+    "expires": "$(get_expiry_date "$expiry_days")",
+    "algorithm": "$DEFAULT_ALGORITHM"
+}
+EOF
+}
+
 # Export functions
 export -f init_directories
 export -f load_config
@@ -178,3 +303,18 @@ export -f check_dependency
 export -f check_required_dependencies
 export -f confirm_action
 export -f add_history
+
+# Export consolidated utility functions
+export -f calculate_checksum
+export -f verify_checksum
+export -f get_metadata_field
+export -f require_file
+export -f require_key_file
+export -f require_secret
+export -f get_current_iso_date
+export -f get_expiry_date
+export -f encrypt_with_key
+export -f decrypt_with_key
+export -f secure_delete
+export -f create_secret_metadata
+export -f create_key_metadata
