@@ -1,21 +1,23 @@
-# ADE-Crypt Makefile
+# ADE crypt Makefile
 # Common development tasks
 
-.PHONY: help test lint coverage install clean setup-dev docs
+.PHONY: help test lint coverage install clean setup-dev docs check-deps install-dev
 
 # Default target
 help:
-	@echo "ADE-Crypt Development Tasks"
+	@echo "ADE crypt Development Tasks"
 	@echo ""
 	@echo "Usage: make <target>"
 	@echo ""
 	@echo "Targets:"
+	@echo "  check-deps  Check all dependencies"
+	@echo "  install-dev Install development dependencies"
 	@echo "  test        Run all tests"
 	@echo "  lint        Run ShellCheck linting"
 	@echo "  coverage    Generate coverage report"
-	@echo "  install     Install ADE-Crypt system-wide"
+	@echo "  install     Install ADE crypt system-wide"
 	@echo "  clean       Clean temporary files"
-	@echo "  setup-dev   Set up development environment"
+	@echo "  setup       Set up development environment"
 	@echo "  docs        Generate documentation"
 	@echo "  ci          Run full CI pipeline locally"
 	@echo "  release     Prepare release package"
@@ -35,9 +37,24 @@ coverage:
 	@echo "Generating coverage report..."
 	./scripts/coverage.sh
 
+# Check dependencies
+check-deps:
+	@echo "Checking dependencies..."
+	./scripts/check-deps.sh
+
+# Check development dependencies
+check-dev-deps:
+	@echo "Checking development dependencies..."
+	./scripts/check-deps.sh --dev
+
+# Install development dependencies
+install-dev:
+	@echo "Installing development dependencies..."
+	./scripts/install-dev-deps.sh
+
 # Install system-wide
 install:
-	@echo "Installing ADE-Crypt..."
+	@echo "Installing ADE crypt..."
 	./install.sh
 
 # Clean temporary files
@@ -50,7 +67,7 @@ clean:
 	find . -name "*.enc" -not -path "./tests/*" -delete
 
 # Set up development environment
-setup-dev:
+setup: check-deps check-dev-deps
 	@echo "Setting up development environment..."
 	@# Install pre-commit if available
 	@if command -v pip >/dev/null 2>&1; then \
@@ -60,15 +77,10 @@ setup-dev:
 	else \
 		echo "⚠ pip not found, skipping pre-commit setup"; \
 	fi
-	@# Check dependencies
-	@echo "Checking dependencies..."
-	@for cmd in shellcheck bats openssl gpg; do \
-		if command -v $$cmd >/dev/null 2>&1; then \
-			echo "✓ $$cmd installed"; \
-		else \
-			echo "✗ $$cmd missing (install recommended)"; \
-		fi; \
-	done
+	@echo "✓ Development environment ready"
+
+# Legacy alias for setup
+setup-dev: setup
 
 # Generate documentation
 docs:

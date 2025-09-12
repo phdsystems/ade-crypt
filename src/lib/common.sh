@@ -120,6 +120,37 @@ check_dependency() {
     fi
 }
 
+# Check all required dependencies
+check_required_dependencies() {
+    local missing=()
+    
+    # Core runtime dependencies
+    command -v openssl >/dev/null 2>&1 || missing+=("openssl")
+    command -v tar >/dev/null 2>&1 || missing+=("tar")
+    command -v gzip >/dev/null 2>&1 || missing+=("gzip")
+    command -v sha256sum >/dev/null 2>&1 || missing+=("sha256sum")
+    
+    # Optional dependencies with graceful fallback
+    if ! command -v gpg >/dev/null 2>&1; then
+        warning_msg "GPG not found - password-based encryption will be unavailable"
+    fi
+    
+    if ! command -v bzip2 >/dev/null 2>&1; then
+        warning_msg "bzip2 not found - bzip2 compression will be unavailable"
+    fi
+    
+    if ! command -v xz >/dev/null 2>&1; then
+        warning_msg "xz not found - xz compression will be unavailable"
+    fi
+    
+    # Report missing required dependencies
+    if [ ${#missing[@]} -gt 0 ]; then
+        error_exit "Missing required dependencies: ${missing[*]}\nInstall with: sudo apt-get install ${missing[*]}"
+    fi
+    
+    verbose_output "All required dependencies satisfied"
+}
+
 # Confirmation prompt
 confirm_action() {
     local message="$1"
@@ -144,5 +175,6 @@ export -f warning_msg
 export -f info_msg
 export -f show_progress
 export -f check_dependency
+export -f check_required_dependencies
 export -f confirm_action
 export -f add_history

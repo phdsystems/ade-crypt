@@ -25,6 +25,9 @@ source "$CORE_DIR/help.sh"
 init_directories
 load_config
 
+# Check dependencies on first run
+check_required_dependencies
+
 # Main execution
 main() {
     # Check modules on first run

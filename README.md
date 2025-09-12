@@ -45,6 +45,71 @@ ade-crypt get api-key
 - Docker/K8s integration
 - [Full changelog](DOCS.md#whats-new-in-v20)
 
+## Dependencies
+
+### Runtime Dependencies
+- `openssl` - Encryption/decryption operations
+- `tar` - Archive operations
+- `gzip` - Compression support
+- `sha256sum` - File integrity verification
+
+### Optional Dependencies
+- `gpg` - Password-based encryption (recommended)
+- `bzip2` - Additional compression format
+- `xz` - Additional compression format
+- `aws` - AWS S3 cloud sync
+- `gsutil` - Google Cloud sync
+- `az` - Azure cloud sync
+
+### Installation
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get update
+sudo apt-get install openssl tar gzip gnupg bzip2 xz-utils
+```
+
+**RHEL/CentOS/Fedora:**
+```bash
+sudo yum install openssl tar gzip gnupg2 bzip2 xz
+```
+
+**macOS:**
+```bash
+brew install openssl gnu-tar gzip gnupg bzip2 xz
+```
+
+**Check dependencies:**
+```bash
+./scripts/check-deps.sh
+```
+
+## Development
+
+### Development Dependencies
+- `shellcheck` - Code linting
+- `bats` - Testing framework
+- `git` - Version control
+- `make` - Build automation
+
+### Setup Development Environment
+```bash
+# Install development dependencies
+./scripts/install-dev-deps.sh
+
+# Verify all dependencies
+make check-deps
+
+# Set up development environment
+make setup
+
+# Run tests
+make test
+
+# Run linting
+make lint
+```
+
 ## Common Usage
 
 ```bash
