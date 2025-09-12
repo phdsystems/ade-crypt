@@ -1,0 +1,1774 @@
+#!/bin/bash
+
+# ADE-Crypt Enhanced - Advanced Encryption/Decryption utility
+# Version: 2.0.0
+# Provides comprehensive encryption, secrets management, and security features
+
+set -e
+
+# Version
+VERSION="2.0.0"
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+RED='\033[0;31m'
+MAGENTA='\033[0;35m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+BOLD='\033[1m'
+
+# Default paths
+BASE_DIR="${ADE_CRYPT_HOME:-$HOME/.ade}"
+SECRETS_DIR="$BASE_DIR/secrets"
+KEYS_DIR="$BASE_DIR/keys"
+ENCRYPTED_DIR="$BASE_DIR/encrypted"
+CONFIG_FILE="$BASE_DIR/config"
+AUDIT_LOG="$BASE_DIR/audit.log"
+HISTORY_FILE="$BASE_DIR/history"
+METADATA_DIR="$BASE_DIR/metadata"
+VERSIONS_DIR="$BASE_DIR/versions"
+SIGNATURES_DIR="$BASE_DIR/signatures"
+
+# Configuration defaults
+DEFAULT_ALGORITHM="aes-256-cbc"
+DEFAULT_COMPRESSION="gzip"
+VERBOSE=0
+QUIET=0
+INTERACTIVE=0
+PROGRESS=0
+AUTO_BACKUP=1
+AUDIT_ENABLED=1
+KEY_EXPIRY_DAYS=90
+SECRET_EXPIRY_DAYS=180
+
+# Global variables
+USE_PASSWORD=false
+SHRED_ORIGINAL=false
+KEY_FILE=""
+OUTPUT_FILE=""
+RECURSIVE=false
+ARMOR=false
+STREAMING=false
+MULTI_RECIPIENT=""
+SIGN_FILES=false
+TWO_FACTOR=false
+COMPRESSION=""
+BATCH_FILE=""
+CLOUD_SYNC=""
+SPLIT_SIZE=""
+VERIFY_CHECKSUM=true
+EXPORT_FORMAT=""
+TAGS=""
+CATEGORY=""
+SEARCH_TERM=""
+
+# Ensure directories exist
+init_directories() {
+    mkdir -p "$SECRETS_DIR" "$KEYS_DIR" "$ENCRYPTED_DIR" "$METADATA_DIR" "$VERSIONS_DIR" "$SIGNATURES_DIR"
+    chmod 700 "$BASE_DIR" "$SECRETS_DIR" "$KEYS_DIR" "$ENCRYPTED_DIR" "$METADATA_DIR" "$VERSIONS_DIR" "$SIGNATURES_DIR"
+}
+
+# Load configuration
+load_config() {
+    if [ -f "$CONFIG_FILE" ]; then
+        source "$CONFIG_FILE"
+    else
+        create_default_config
+    fi
+}
+
+# Create default configuration
+create_default_config() {
+    cat > "$CONFIG_FILE" << EOF
+# ADE-Crypt Configuration File
+# Generated: $(date)
+
+# Encryption settings
+ALGORITHM="$DEFAULT_ALGORITHM"
+COMPRESSION="$DEFAULT_COMPRESSION"
+AUTO_BACKUP=$AUTO_BACKUP
+AUDIT_ENABLED=$AUDIT_ENABLED
+
+# Key management
+KEY_EXPIRY_DAYS=$KEY_EXPIRY_DAYS
+AUTO_ROTATE=0
+KEY_LENGTH=256
+
+# Secret management
+SECRET_EXPIRY_DAYS=$SECRET_EXPIRY_DAYS
+SECRET_VERSIONING=1
+MAX_VERSIONS=10
+
+# Output settings
+VERBOSE=$VERBOSE
+QUIET=$QUIET
+PROGRESS=$PROGRESS
+COLOR_OUTPUT=1
+
+# Cloud sync settings
+CLOUD_PROVIDER=""
+CLOUD_BUCKET=""
+CLOUD_PATH=""
+
+# Security settings
+REQUIRE_2FA=0
+MIN_PASSWORD_LENGTH=12
+SHRED_ITERATIONS=3
+
+# Integration settings
+GIT_HOOKS_ENABLED=0
+DOCKER_INTEGRATION=0
+K8S_INTEGRATION=0
+EOF
+    chmod 600 "$CONFIG_FILE"
+}
+
+# Audit logging
+audit_log() {
+    if [ "$AUDIT_ENABLED" -eq 1 ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$AUDIT_LOG"
+    fi
+}
+
+# Progress indicator
+show_progress() {
+    if [ "$PROGRESS" -eq 1 ] && [ "$QUIET" -eq 0 ]; then
+        local file="$1"
+        local size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "0")
+        local size_mb=$((size / 1048576))
+        echo -e "${CYAN}Processing: $file (${size_mb}MB)${NC}"
+        
+        # Simple progress bar
+        echo -n "["
+        for i in {1..50}; do
+            echo -n "="
+            sleep 0.01
+        done
+        echo "] Done"
+    fi
+}
+
+# Verbose output
+verbose_output() {
+    if [ "$VERBOSE" -eq 1 ] && [ "$QUIET" -eq 0 ]; then
+        echo -e "${BLUE}[VERBOSE] $1${NC}"
+    fi
+}
+
+# Show usage
+show_help() {
+    echo -e "${BOLD}${CYAN}ADE-Crypt Enhanced v$VERSION${NC}"
+    echo ""
+    echo "Usage: ade-crypt <command> [options]"
+    echo ""
+    echo -e "${BOLD}Core Commands:${NC}"
+    echo "  encrypt <file>         Encrypt a file or directory"
+    echo "  decrypt <file>         Decrypt a file or directory"
+    echo "  store <name>           Store a secret securely"
+    echo "  get <name>             Retrieve a stored secret"
+    echo "  list                   List stored secrets"
+    echo "  delete <name>          Delete a stored secret"
+    echo ""
+    echo -e "${BOLD}Key Management:${NC}"
+    echo "  generate-key [name]    Generate encryption key"
+    echo "  rotate-keys            Rotate encryption keys"
+    echo "  expire-key <key>       Set key expiration"
+    echo "  list-keys              List all keys with status"
+    echo ""
+    echo -e "${BOLD}Advanced Features:${NC}"
+    echo "  sign <file>            Create digital signature"
+    echo "  verify <file>          Verify digital signature"
+    echo "  multi-encrypt <file>   Encrypt for multiple recipients"
+    echo "  stream-encrypt         Encrypt from stdin"
+    echo "  batch <file>           Batch process from file"
+    echo "  split <file>           Split large encrypted files"
+    echo "  merge <prefix>         Merge split files"
+    echo ""
+    echo -e "${BOLD}Secret Management:${NC}"
+    echo "  search <term>          Search secrets"
+    echo "  tag <secret> <tags>    Add tags to secret"
+    echo "  category <secret> <cat> Set secret category"
+    echo "  expire <secret> <days> Set secret expiration"
+    echo "  version <secret>       Show secret versions"
+    echo "  export [format]        Export secrets (json/yaml/env)"
+    echo "  import <file>          Import secrets"
+    echo "  share <secret>         Generate QR code for sharing"
+    echo ""
+    echo -e "${BOLD}Integration:${NC}"
+    echo "  docker-export          Export as Docker secrets"
+    echo "  k8s-export             Export as K8s secrets"
+    echo "  env-export             Export as environment variables"
+    echo "  git-hook [install]     Install git pre-commit hooks"
+    echo ""
+    echo -e "${BOLD}Backup & Sync:${NC}"
+    echo "  backup                 Backup encrypted secrets"
+    echo "  restore <backup>       Restore from backup"
+    echo "  cloud-sync [push|pull] Sync with cloud storage"
+    echo "  history                Show operation history"
+    echo "  undo                   Undo last operation"
+    echo ""
+    echo -e "${BOLD}Options:${NC}"
+    echo "  -k, --key <file>       Use specific key file"
+    echo "  -o, --output <file>    Output to specific file"
+    echo "  -r, --recursive        Encrypt directory recursively"
+    echo "  -s, --shred            Shred original after encryption"
+    echo "  -p, --password         Use password-based encryption"
+    echo "  -a, --armor            ASCII armor output (base64)"
+    echo "  -2, --two-factor       Require key AND password"
+    echo "  -c, --compress <type>  Compression (gzip/bzip2/xz/none)"
+    echo "  -m, --multi <keys>     Multiple recipient keys"
+    echo "  -S, --sign             Sign encrypted files"
+    echo "  -v, --verbose          Verbose output"
+    echo "  -q, --quiet            Quiet mode"
+    echo "  -i, --interactive      Interactive mode"
+    echo "  -P, --progress         Show progress bar"
+    echo "  --config <file>        Use specific config file"
+    echo "  --no-audit             Disable audit logging"
+    echo "  --no-verify            Skip checksum verification"
+    echo ""
+    echo -e "${BOLD}Examples:${NC}"
+    echo "  ade-crypt encrypt -s -c gzip sensitive.doc"
+    echo "  ade-crypt stream-encrypt < input.txt > output.enc"
+    echo "  ade-crypt multi-encrypt -m 'user1.key,user2.key' file.pdf"
+    echo "  ade-crypt search 'api' --category production"
+    echo "  ade-crypt export --format env > .env"
+    echo "  ade-crypt cloud-sync push --provider s3"
+}
+
+# Interactive mode
+interactive_mode() {
+    clear
+    echo -e "${BOLD}${CYAN}ADE-Crypt Interactive Mode${NC}"
+    echo ""
+    
+    PS3="Select operation: "
+    options=(
+        "Encrypt file"
+        "Decrypt file"
+        "Store secret"
+        "Retrieve secret"
+        "List secrets"
+        "Generate key"
+        "Rotate keys"
+        "Backup"
+        "Cloud sync"
+        "Configuration"
+        "Exit"
+    )
+    
+    select opt in "${options[@]}"; do
+        case $REPLY in
+            1) interactive_encrypt ;;
+            2) interactive_decrypt ;;
+            3) interactive_store ;;
+            4) interactive_get ;;
+            5) list_secrets_detailed ;;
+            6) interactive_generate_key ;;
+            7) rotate_keys ;;
+            8) backup_secrets ;;
+            9) interactive_cloud_sync ;;
+            10) edit_config ;;
+            11) exit 0 ;;
+            *) echo "Invalid option" ;;
+        esac
+        echo ""
+        read -p "Press Enter to continue..."
+        clear
+        echo -e "${BOLD}${CYAN}ADE-Crypt Interactive Mode${NC}"
+        echo ""
+    done
+}
+
+# Interactive encrypt
+interactive_encrypt() {
+    read -p "Enter file to encrypt: " file
+    read -p "Use password protection? (y/n): " use_pass
+    read -p "Shred original? (y/n): " shred
+    read -p "Compression? (gzip/bzip2/xz/none): " compress
+    
+    local opts=""
+    [ "$use_pass" = "y" ] && opts="$opts -p"
+    [ "$shred" = "y" ] && opts="$opts -s"
+    [ -n "$compress" ] && opts="$opts -c $compress"
+    
+    encrypt_file "$file" "" $opts
+}
+
+# Check dependencies
+check_dependencies() {
+    local missing=()
+    
+    command -v openssl >/dev/null 2>&1 || missing+=("openssl")
+    command -v gpg >/dev/null 2>&1 || missing+=("gpg")
+    
+    # Optional dependencies
+    if [ "$CLOUD_SYNC" = "s3" ]; then
+        command -v aws >/dev/null 2>&1 || missing+=("awscli")
+    fi
+    
+    if [ ${#missing[@]} -gt 0 ]; then
+        echo -e "${RED}Missing required tools: ${missing[*]}${NC}"
+        echo "Install with: sudo apt-get install ${missing[*]}"
+        exit 1
+    fi
+}
+
+# Generate encryption key with expiration
+generate_key() {
+    local key_name="${1:-default}"
+    local key_file="$KEYS_DIR/${key_name}.key"
+    local metadata_file="$METADATA_DIR/${key_name}.meta"
+    
+    verbose_output "Generating key: $key_name"
+    echo -e "${CYAN}Generating encryption key: $key_name${NC}"
+    
+    # Generate 256-bit key
+    openssl rand -base64 32 > "$key_file"
+    chmod 600 "$key_file"
+    
+    # Store metadata
+    cat > "$metadata_file" << EOF
+{
+    "name": "$key_name",
+    "created": "$(date -Iseconds)",
+    "expires": "$(date -Iseconds -d "+${KEY_EXPIRY_DAYS} days" 2>/dev/null || date -Iseconds)",
+    "algorithm": "$DEFAULT_ALGORITHM",
+    "length": 256,
+    "status": "active"
+}
+EOF
+    
+    audit_log "KEY_GENERATED: $key_name"
+    echo -e "${GREEN}✓ Key generated: $key_file${NC}"
+    echo -e "${YELLOW}⚠️  Key expires in ${KEY_EXPIRY_DAYS} days${NC}"
+}
+
+# List keys with status
+list_keys() {
+    echo -e "${CYAN}Encryption Keys:${NC}"
+    echo ""
+    
+    for key in "$KEYS_DIR"/*.key; do
+        [ -f "$key" ] || continue
+        local name=$(basename "$key" .key)
+        local meta_file="$METADATA_DIR/${name}.meta"
+        
+        if [ -f "$meta_file" ]; then
+            local created=$(grep '"created"' "$meta_file" | cut -d'"' -f4)
+            local expires=$(grep '"expires"' "$meta_file" | cut -d'"' -f4)
+            local status=$(grep '"status"' "$meta_file" | cut -d'"' -f4)
+            
+            echo -e "  ${BOLD}$name${NC}"
+            echo -e "    Created: $created"
+            echo -e "    Expires: $expires"
+            echo -e "    Status:  $status"
+        else
+            echo -e "  ${BOLD}$name${NC} (no metadata)"
+        fi
+        echo ""
+    done
+}
+
+# Stream encryption
+stream_encrypt() {
+    local key_file="${KEY_FILE:-$KEYS_DIR/default.key}"
+    
+    if [ ! -f "$key_file" ]; then
+        echo -e "${YELLOW}No key found, generating one...${NC}"
+        generate_key "default"
+    fi
+    
+    verbose_output "Stream encrypting from stdin"
+    audit_log "STREAM_ENCRYPT: stdin"
+    
+    if [ "$USE_PASSWORD" = true ]; then
+        gpg --symmetric --cipher-algo AES256 --armor
+    else
+        openssl enc -aes-256-cbc -salt -pass file:"$key_file"
+    fi
+}
+
+# Stream decryption
+stream_decrypt() {
+    local key_file="${KEY_FILE:-$KEYS_DIR/default.key}"
+    
+    verbose_output "Stream decrypting from stdin"
+    audit_log "STREAM_DECRYPT: stdin"
+    
+    if [ "$USE_PASSWORD" = true ]; then
+        gpg --decrypt
+    else
+        openssl enc -aes-256-cbc -d -pass file:"$key_file"
+    fi
+}
+
+# Multi-recipient encryption
+multi_encrypt() {
+    local input_file="$1"
+    local recipients="$2"
+    local output_file="${3:-${input_file}.multi.enc}"
+    
+    if [ ! -f "$input_file" ]; then
+        echo -e "${RED}File not found: $input_file${NC}"
+        exit 1
+    fi
+    
+    echo -e "${CYAN}Multi-recipient encryption: $input_file${NC}"
+    verbose_output "Recipients: $recipients"
+    
+    # Create temporary session key
+    local session_key=$(openssl rand -hex 32)
+    local session_key_file="/tmp/session_$$.key"
+    echo "$session_key" > "$session_key_file"
+    
+    # Encrypt file with session key
+    openssl enc -aes-256-cbc -salt -in "$input_file" -out "${output_file}.data" -pass file:"$session_key_file"
+    
+    # Encrypt session key for each recipient
+    IFS=',' read -ra KEYS <<< "$recipients"
+    for key in "${KEYS[@]}"; do
+        if [ -f "$KEYS_DIR/$key" ]; then
+            openssl rsautl -encrypt -inkey "$KEYS_DIR/$key" -pubin -in "$session_key_file" -out "${output_file}.key.${key}"
+            echo -e "${GREEN}✓ Encrypted for: $key${NC}"
+        else
+            echo -e "${YELLOW}Warning: Key not found: $key${NC}"
+        fi
+    done
+    
+    # Clean up
+    shred -vzu "$session_key_file" 2>/dev/null || rm -f "$session_key_file"
+    
+    audit_log "MULTI_ENCRYPT: $input_file for ${#KEYS[@]} recipients"
+    echo -e "${GREEN}✓ Multi-recipient encryption complete${NC}"
+}
+
+# Digital signature
+sign_file() {
+    local file="$1"
+    local sig_file="${file}.sig"
+    
+    if [ ! -f "$file" ]; then
+        echo -e "${RED}File not found: $file${NC}"
+        exit 1
+    fi
+    
+    echo -e "${CYAN}Signing file: $file${NC}"
+    
+    gpg --detach-sign --armor --output "$sig_file" "$file"
+    
+    if [ $? -eq 0 ]; then
+        audit_log "SIGN: $file"
+        echo -e "${GREEN}✓ Signature created: $sig_file${NC}"
+    else
+        echo -e "${RED}Signing failed${NC}"
+        exit 1
+    fi
+}
+
+# Verify signature
+verify_signature() {
+    local file="$1"
+    local sig_file="${file}.sig"
+    
+    if [ ! -f "$sig_file" ]; then
+        echo -e "${RED}Signature not found: $sig_file${NC}"
+        exit 1
+    fi
+    
+    echo -e "${CYAN}Verifying signature: $file${NC}"
+    
+    gpg --verify "$sig_file" "$file"
+    
+    if [ $? -eq 0 ]; then
+        audit_log "VERIFY: $file - VALID"
+        echo -e "${GREEN}✓ Signature valid${NC}"
+    else
+        audit_log "VERIFY: $file - INVALID"
+        echo -e "${RED}✗ Signature invalid${NC}"
+        exit 1
+    fi
+}
+
+# Two-factor encryption
+two_factor_encrypt() {
+    local input_file="$1"
+    local output_file="${2:-${input_file}.2fa.enc}"
+    local key_file="${KEY_FILE:-$KEYS_DIR/default.key}"
+    
+    echo -e "${CYAN}Two-factor encryption: $input_file${NC}"
+    
+    # First pass: key-based encryption
+    local temp_file="/tmp/2fa_temp_$$.enc"
+    openssl enc -aes-256-cbc -salt -in "$input_file" -out "$temp_file" -pass file:"$key_file"
+    
+    # Second pass: password-based encryption
+    echo -e "${YELLOW}Enter password for second factor:${NC}"
+    gpg --symmetric --cipher-algo AES256 --output "$output_file" "$temp_file"
+    
+    # Clean up
+    shred -vzu "$temp_file" 2>/dev/null || rm -f "$temp_file"
+    
+    audit_log "2FA_ENCRYPT: $input_file"
+    echo -e "${GREEN}✓ Two-factor encryption complete${NC}"
+}
+
+# Batch processing
+batch_process() {
+    local batch_file="$1"
+    local operation="$2"
+    
+    if [ ! -f "$batch_file" ]; then
+        echo -e "${RED}Batch file not found: $batch_file${NC}"
+        exit 1
+    fi
+    
+    echo -e "${CYAN}Batch processing from: $batch_file${NC}"
+    
+    local total=$(wc -l < "$batch_file")
+    local current=0
+    
+    while IFS= read -r file; do
+        ((current++))
+        echo -e "${BLUE}[$current/$total] Processing: $file${NC}"
+        
+        case "$operation" in
+            encrypt)
+                encrypt_file "$file"
+                ;;
+            decrypt)
+                decrypt_file "$file"
+                ;;
+            *)
+                echo -e "${RED}Unknown operation: $operation${NC}"
+                ;;
+        esac
+    done < "$batch_file"
+    
+    audit_log "BATCH: Processed $total files"
+    echo -e "${GREEN}✓ Batch processing complete: $total files${NC}"
+}
+
+# Compression wrapper
+compress_data() {
+    local compression_type="$1"
+    
+    case "$compression_type" in
+        gzip)
+            gzip -c
+            ;;
+        bzip2)
+            bzip2 -c
+            ;;
+        xz)
+            xz -c
+            ;;
+        none|"")
+            cat
+            ;;
+        *)
+            echo -e "${RED}Unknown compression: $compression_type${NC}" >&2
+            exit 1
+            ;;
+    esac
+}
+
+# Decompression wrapper
+decompress_data() {
+    local compression_type="$1"
+    
+    case "$compression_type" in
+        gzip)
+            gzip -dc
+            ;;
+        bzip2)
+            bzip2 -dc
+            ;;
+        xz)
+            xz -dc
+            ;;
+        none|"")
+            cat
+            ;;
+        *)
+            echo -e "${RED}Unknown compression: $compression_type${NC}" >&2
+            exit 1
+            ;;
+    esac
+}
+
+# Enhanced encrypt file with compression
+encrypt_file() {
+    local input_file="$1"
+    local output_file="${2:-${input_file}.enc}"
+    local key_file="${KEY_FILE:-$KEYS_DIR/default.key}"
+    
+    if [ ! -f "$input_file" ]; then
+        echo -e "${RED}File not found: $input_file${NC}"
+        exit 1
+    fi
+    
+    # Generate key if it doesn't exist
+    if [ ! -f "$key_file" ]; then
+        echo -e "${YELLOW}No key found, generating one...${NC}"
+        generate_key "default"
+    fi
+    
+    show_progress "$input_file"
+    verbose_output "Encrypting with compression: ${COMPRESSION:-none}"
+    echo -e "${CYAN}Encrypting: $input_file${NC}"
+    
+    # Add to history
+    echo "$(date -Iseconds) ENCRYPT $input_file" >> "$HISTORY_FILE"
+    
+    # Calculate checksum
+    local checksum=$(sha256sum "$input_file" | cut -d' ' -f1)
+    echo "$checksum" > "${output_file}.sha256"
+    
+    if [ "$TWO_FACTOR" = true ]; then
+        two_factor_encrypt "$input_file" "$output_file"
+    elif [ "$USE_PASSWORD" = true ]; then
+        # Password-based encryption with compression
+        compress_data "${COMPRESSION:-gzip}" < "$input_file" | \
+            gpg --symmetric --cipher-algo AES256 --output "$output_file"
+    else
+        # Key-based encryption with compression
+        compress_data "${COMPRESSION:-gzip}" < "$input_file" | \
+            openssl enc -aes-256-cbc -salt -out "$output_file" -pass file:"$key_file"
+    fi
+    
+    if [ $? -eq 0 ]; then
+        audit_log "ENCRYPT: $input_file -> $output_file (checksum: $checksum)"
+        
+        # Sign if requested
+        if [ "$SIGN_FILES" = true ]; then
+            sign_file "$output_file"
+        fi
+        
+        echo -e "${GREEN}✓ Encrypted: $output_file${NC}"
+        
+        if [ "$SHRED_ORIGINAL" = true ]; then
+            echo -e "${YELLOW}Shredding original file...${NC}"
+            shred -vzu "$input_file" 2>/dev/null || rm -f "$input_file"
+            audit_log "SHRED: $input_file"
+        fi
+    else
+        echo -e "${RED}Encryption failed${NC}"
+        exit 1
+    fi
+}
+
+# Enhanced decrypt file
+decrypt_file() {
+    local input_file="$1"
+    local output_file="${2:-${input_file%.enc}}"
+    local key_file="${KEY_FILE:-$KEYS_DIR/default.key}"
+    
+    if [ ! -f "$input_file" ]; then
+        echo -e "${RED}File not found: $input_file${NC}"
+        exit 1
+    fi
+    
+    show_progress "$input_file"
+    verbose_output "Decrypting with decompression"
+    echo -e "${CYAN}Decrypting: $input_file${NC}"
+    
+    # Add to history
+    echo "$(date -Iseconds) DECRYPT $input_file" >> "$HISTORY_FILE"
+    
+    # Verify signature if exists
+    if [ -f "${input_file}.sig" ] && [ "$VERIFY_CHECKSUM" = true ]; then
+        verify_signature "$input_file"
+    fi
+    
+    if [ "$TWO_FACTOR" = true ]; then
+        # Two-factor decryption
+        local temp_file="/tmp/2fa_temp_$$.enc"
+        echo -e "${YELLOW}Enter password for first factor:${NC}"
+        gpg --decrypt --output "$temp_file" "$input_file"
+        openssl enc -aes-256-cbc -d -in "$temp_file" -out "$output_file" -pass file:"$key_file"
+        shred -vzu "$temp_file" 2>/dev/null || rm -f "$temp_file"
+    elif [ "$USE_PASSWORD" = true ]; then
+        # Password-based decryption with decompression
+        gpg --decrypt "$input_file" | decompress_data "${COMPRESSION:-gzip}" > "$output_file"
+    else
+        # Key-based decryption with decompression
+        if [ ! -f "$key_file" ]; then
+            echo -e "${RED}Key not found: $key_file${NC}"
+            exit 1
+        fi
+        openssl enc -aes-256-cbc -d -in "$input_file" -pass file:"$key_file" | \
+            decompress_data "${COMPRESSION:-gzip}" > "$output_file"
+    fi
+    
+    if [ $? -eq 0 ]; then
+        # Verify checksum if exists
+        if [ -f "${input_file}.sha256" ] && [ "$VERIFY_CHECKSUM" = true ]; then
+            local expected=$(cat "${input_file}.sha256")
+            local actual=$(sha256sum "$output_file" | cut -d' ' -f1)
+            
+            if [ "$expected" = "$actual" ]; then
+                echo -e "${GREEN}✓ Checksum verified${NC}"
+            else
+                echo -e "${RED}✗ Checksum mismatch!${NC}"
+                audit_log "DECRYPT_FAILED: $input_file - checksum mismatch"
+                exit 1
+            fi
+        fi
+        
+        audit_log "DECRYPT: $input_file -> $output_file"
+        echo -e "${GREEN}✓ Decrypted: $output_file${NC}"
+    else
+        echo -e "${RED}Decryption failed${NC}"
+        audit_log "DECRYPT_FAILED: $input_file"
+        exit 1
+    fi
+}
+
+# Split large files
+split_file() {
+    local input_file="$1"
+    local size="${2:-100M}"
+    
+    if [ ! -f "$input_file" ]; then
+        echo -e "${RED}File not found: $input_file${NC}"
+        exit 1
+    fi
+    
+    echo -e "${CYAN}Splitting file: $input_file (size: $size)${NC}"
+    
+    split -b "$size" "$input_file" "${input_file}.part."
+    
+    audit_log "SPLIT: $input_file into $size chunks"
+    echo -e "${GREEN}✓ File split into parts${NC}"
+}
+
+# Merge split files
+merge_files() {
+    local prefix="$1"
+    local output="${2:-merged.enc}"
+    
+    echo -e "${CYAN}Merging files with prefix: $prefix${NC}"
+    
+    cat "${prefix}"* > "$output"
+    
+    audit_log "MERGE: $prefix* -> $output"
+    echo -e "${GREEN}✓ Files merged: $output${NC}"
+}
+
+# Enhanced store secret with metadata
+store_secret() {
+    local name="$1"
+    local secret_file="$SECRETS_DIR/${name}.enc"
+    local metadata_file="$METADATA_DIR/secret_${name}.meta"
+    local version_file="$VERSIONS_DIR/${name}_$(date +%s).enc"
+    
+    if [ -z "$name" ]; then
+        echo -e "${RED}Please provide a secret name${NC}"
+        exit 1
+    fi
+    
+    echo -e "${CYAN}Enter secret value for '$name' (press Ctrl+D when done):${NC}"
+    
+    # Read secret from stdin
+    local secret
+    secret=$(cat)
+    
+    # Version control - backup existing
+    if [ -f "$secret_file" ]; then
+        cp "$secret_file" "$version_file"
+        verbose_output "Backed up previous version"
+    fi
+    
+    # Encrypt and store
+    echo -n "$secret" | openssl enc -aes-256-cbc -salt -out "$secret_file" -pass file:"$KEYS_DIR/default.key"
+    chmod 600 "$secret_file"
+    
+    # Store metadata
+    cat > "$metadata_file" << EOF
+{
+    "name": "$name",
+    "created": "$(date -Iseconds)",
+    "modified": "$(date -Iseconds)",
+    "expires": "$(date -Iseconds -d "+${SECRET_EXPIRY_DAYS} days" 2>/dev/null || date -Iseconds)",
+    "category": "${CATEGORY:-general}",
+    "tags": "${TAGS:-}",
+    "version": "$(ls "$VERSIONS_DIR/${name}_"* 2>/dev/null | wc -l)",
+    "checksum": "$(echo -n "$secret" | sha256sum | cut -d' ' -f1)"
+}
+EOF
+    
+    audit_log "STORE: $name (category: ${CATEGORY:-general}, tags: ${TAGS:-none})"
+    echo -e "${GREEN}✓ Secret stored: $name${NC}"
+    
+    # Check expiration
+    echo -e "${YELLOW}Secret expires in ${SECRET_EXPIRY_DAYS} days${NC}"
+}
+
+# Get secret with version support
+get_secret() {
+    local name="$1"
+    local version="${2:-latest}"
+    local secret_file="$SECRETS_DIR/${name}.enc"
+    
+    if [ "$version" != "latest" ]; then
+        # Get specific version
+        local version_files=($VERSIONS_DIR/${name}_*.enc)
+        if [ "${#version_files[@]}" -ge "$version" ]; then
+            secret_file="${version_files[$((version-1))]}"
+        else
+            echo -e "${RED}Version $version not found${NC}"
+            exit 1
+        fi
+    fi
+    
+    if [ ! -f "$secret_file" ]; then
+        echo -e "${RED}Secret not found: $name${NC}"
+        exit 1
+    fi
+    
+    # Check expiration
+    local metadata_file="$METADATA_DIR/secret_${name}.meta"
+    if [ -f "$metadata_file" ]; then
+        local expires=$(grep '"expires"' "$metadata_file" | cut -d'"' -f4)
+        local now=$(date +%s)
+        local exp_time=$(date -d "$expires" +%s 2>/dev/null || echo "$now")
+        
+        if [ "$exp_time" -lt "$now" ]; then
+            echo -e "${RED}Secret has expired!${NC}"
+            audit_log "GET_EXPIRED: $name"
+            exit 1
+        fi
+    fi
+    
+    # Decrypt and output
+    openssl enc -aes-256-cbc -d -in "$secret_file" -pass file:"$KEYS_DIR/default.key"
+    
+    audit_log "GET: $name (version: $version)"
+}
+
+# Search secrets
+search_secrets() {
+    local term="$1"
+    local category="$2"
+    
+    echo -e "${CYAN}Searching secrets: '$term'${NC}"
+    [ -n "$category" ] && echo -e "${CYAN}Category filter: $category${NC}"
+    echo ""
+    
+    for meta_file in "$METADATA_DIR"/secret_*.meta; do
+        [ -f "$meta_file" ] || continue
+        
+        local name=$(grep '"name"' "$meta_file" | cut -d'"' -f4)
+        local cat=$(grep '"category"' "$meta_file" | cut -d'"' -f4)
+        local tags=$(grep '"tags"' "$meta_file" | cut -d'"' -f4)
+        
+        # Apply filters
+        if [ -n "$term" ]; then
+            echo "$name $tags" | grep -q "$term" || continue
+        fi
+        
+        if [ -n "$category" ]; then
+            [ "$cat" = "$category" ] || continue
+        fi
+        
+        echo -e "  ${BOLD}$name${NC}"
+        echo -e "    Category: $cat"
+        echo -e "    Tags: ${tags:-none}"
+        echo ""
+    done
+}
+
+# List secrets with details
+list_secrets_detailed() {
+    echo -e "${CYAN}Stored secrets:${NC}"
+    echo ""
+    
+    if [ -z "$(ls -A $SECRETS_DIR 2>/dev/null)" ]; then
+        echo "  (none)"
+    else
+        for file in "$SECRETS_DIR"/*.enc; do
+            [ -f "$file" ] || continue
+            local name=$(basename "$file" .enc)
+            local meta_file="$METADATA_DIR/secret_${name}.meta"
+            
+            echo -e "  ${BOLD}$name${NC}"
+            
+            if [ -f "$meta_file" ]; then
+                local created=$(grep '"created"' "$meta_file" | cut -d'"' -f4)
+                local expires=$(grep '"expires"' "$meta_file" | cut -d'"' -f4)
+                local category=$(grep '"category"' "$meta_file" | cut -d'"' -f4)
+                local tags=$(grep '"tags"' "$meta_file" | cut -d'"' -f4)
+                local version=$(grep '"version"' "$meta_file" | cut -d'"' -f4)
+                
+                echo -e "    Created:  $created"
+                echo -e "    Expires:  $expires"
+                echo -e "    Category: $category"
+                echo -e "    Tags:     ${tags:-none}"
+                echo -e "    Versions: $version"
+            fi
+            echo ""
+        done
+    fi
+}
+
+# Export secrets
+export_secrets() {
+    local format="${1:-json}"
+    local output_file="${2:-}"
+    
+    echo -e "${CYAN}Exporting secrets as: $format${NC}"
+    
+    case "$format" in
+        json)
+            echo "{"
+            local first=true
+            for file in "$SECRETS_DIR"/*.enc; do
+                [ -f "$file" ] || continue
+                local name=$(basename "$file" .enc)
+                local value=$(get_secret "$name" 2>/dev/null)
+                
+                [ "$first" = true ] && first=false || echo ","
+                echo -n "  \"$name\": \"$value\""
+            done
+            echo ""
+            echo "}"
+            ;;
+            
+        yaml)
+            echo "secrets:"
+            for file in "$SECRETS_DIR"/*.enc; do
+                [ -f "$file" ] || continue
+                local name=$(basename "$file" .enc)
+                local value=$(get_secret "$name" 2>/dev/null)
+                echo "  $name: \"$value\""
+            done
+            ;;
+            
+        env)
+            for file in "$SECRETS_DIR"/*.enc; do
+                [ -f "$file" ] || continue
+                local name=$(basename "$file" .enc | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+                local value=$(get_secret "$(basename "$file" .enc)" 2>/dev/null)
+                echo "export $name=\"$value\""
+            done
+            ;;
+            
+        docker)
+            for file in "$SECRETS_DIR"/*.enc; do
+                [ -f "$file" ] || continue
+                local name=$(basename "$file" .enc)
+                local value=$(get_secret "$name" 2>/dev/null)
+                echo "echo '$value' | docker secret create $name -"
+            done
+            ;;
+            
+        k8s|kubernetes)
+            echo "apiVersion: v1"
+            echo "kind: Secret"
+            echo "metadata:"
+            echo "  name: ade-secrets"
+            echo "type: Opaque"
+            echo "data:"
+            for file in "$SECRETS_DIR"/*.enc; do
+                [ -f "$file" ] || continue
+                local name=$(basename "$file" .enc)
+                local value=$(get_secret "$name" 2>/dev/null | base64)
+                echo "  $name: $value"
+            done
+            ;;
+            
+        *)
+            echo -e "${RED}Unknown format: $format${NC}"
+            echo "Supported: json, yaml, env, docker, k8s"
+            exit 1
+            ;;
+    esac
+    
+    audit_log "EXPORT: format=$format"
+}
+
+# Import secrets
+import_secrets() {
+    local file="$1"
+    local format="${2:-auto}"
+    
+    if [ ! -f "$file" ]; then
+        echo -e "${RED}File not found: $file${NC}"
+        exit 1
+    fi
+    
+    echo -e "${CYAN}Importing secrets from: $file${NC}"
+    
+    # Auto-detect format
+    if [ "$format" = "auto" ]; then
+        if grep -q "^{" "$file"; then
+            format="json"
+        elif grep -q "^secrets:" "$file"; then
+            format="yaml"
+        elif grep -q "^export " "$file"; then
+            format="env"
+        else
+            echo -e "${RED}Cannot detect format. Please specify: json, yaml, or env${NC}"
+            exit 1
+        fi
+    fi
+    
+    verbose_output "Detected format: $format"
+    
+    case "$format" in
+        json)
+            # Parse JSON and import
+            while IFS= read -r line; do
+                if [[ "$line" =~ \"([^\"]+)\":\ *\"([^\"]+)\" ]]; then
+                    local name="${BASH_REMATCH[1]}"
+                    local value="${BASH_REMATCH[2]}"
+                    echo "$value" | store_secret "$name"
+                fi
+            done < "$file"
+            ;;
+            
+        yaml)
+            # Parse YAML and import
+            while IFS= read -r line; do
+                if [[ "$line" =~ ^[[:space:]]+([^:]+):\ *\"?([^\"]*)\"? ]]; then
+                    local name="${BASH_REMATCH[1]}"
+                    local value="${BASH_REMATCH[2]}"
+                    echo "$value" | store_secret "$name"
+                fi
+            done < "$file"
+            ;;
+            
+        env)
+            # Parse env file and import
+            while IFS= read -r line; do
+                if [[ "$line" =~ ^export\ +([A-Z_]+)=\"(.*)\" ]]; then
+                    local name=$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
+                    local value="${BASH_REMATCH[2]}"
+                    echo "$value" | store_secret "$name"
+                fi
+            done < "$file"
+            ;;
+            
+        *)
+            echo -e "${RED}Unknown format: $format${NC}"
+            exit 1
+            ;;
+    esac
+    
+    audit_log "IMPORT: $file (format: $format)"
+    echo -e "${GREEN}✓ Secrets imported${NC}"
+}
+
+# Generate QR code for secret sharing
+share_secret() {
+    local name="$1"
+    local secret_value=$(get_secret "$name")
+    
+    if command -v qrencode >/dev/null 2>&1; then
+        echo -e "${CYAN}Generating QR code for: $name${NC}"
+        echo "$secret_value" | qrencode -t UTF8
+        audit_log "SHARE: $name via QR"
+    else
+        echo -e "${YELLOW}qrencode not installed. Install with: apt-get install qrencode${NC}"
+        echo -e "${CYAN}Secret value for manual sharing:${NC}"
+        echo "$secret_value"
+    fi
+}
+
+# Delete secret with confirmation
+delete_secret() {
+    local name="$1"
+    local secret_file="$SECRETS_DIR/${name}.enc"
+    local metadata_file="$METADATA_DIR/secret_${name}.meta"
+    
+    if [ ! -f "$secret_file" ]; then
+        echo -e "${RED}Secret not found: $name${NC}"
+        exit 1
+    fi
+    
+    if [ "$INTERACTIVE" -eq 0 ]; then
+        echo -ne "${YELLOW}Delete secret '$name'? (y/n): ${NC}"
+        read -r response
+        
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            echo "Cancelled"
+            return
+        fi
+    fi
+    
+    # Delete all versions
+    rm -f "$VERSIONS_DIR/${name}_"*.enc
+    
+    # Delete metadata
+    rm -f "$metadata_file"
+    
+    # Securely delete secret
+    shred -vzu "$secret_file" 2>/dev/null || rm -f "$secret_file"
+    
+    audit_log "DELETE: $name"
+    echo -e "${GREEN}✓ Secret deleted: $name${NC}"
+}
+
+# Set secret expiration
+set_expiration() {
+    local name="$1"
+    local days="$2"
+    local metadata_file="$METADATA_DIR/secret_${name}.meta"
+    
+    if [ ! -f "$SECRETS_DIR/${name}.enc" ]; then
+        echo -e "${RED}Secret not found: $name${NC}"
+        exit 1
+    fi
+    
+    if [ -f "$metadata_file" ]; then
+        # Update expiration
+        local new_expires=$(date -Iseconds -d "+${days} days" 2>/dev/null || date -Iseconds)
+        sed -i "s/\"expires\": \"[^\"]*\"/\"expires\": \"$new_expires\"/" "$metadata_file"
+        
+        audit_log "EXPIRE_SET: $name expires in $days days"
+        echo -e "${GREEN}✓ Expiration set: $name expires in $days days${NC}"
+    else
+        echo -e "${RED}No metadata found for: $name${NC}"
+    fi
+}
+
+# Add tags to secret
+add_tags() {
+    local name="$1"
+    local tags="$2"
+    local metadata_file="$METADATA_DIR/secret_${name}.meta"
+    
+    if [ ! -f "$SECRETS_DIR/${name}.enc" ]; then
+        echo -e "${RED}Secret not found: $name${NC}"
+        exit 1
+    fi
+    
+    if [ -f "$metadata_file" ]; then
+        # Update tags
+        sed -i "s/\"tags\": \"[^\"]*\"/\"tags\": \"$tags\"/" "$metadata_file"
+        
+        audit_log "TAG: $name with '$tags'"
+        echo -e "${GREEN}✓ Tags added: $name${NC}"
+    else
+        echo -e "${RED}No metadata found for: $name${NC}"
+    fi
+}
+
+# Set category
+set_category() {
+    local name="$1"
+    local category="$2"
+    local metadata_file="$METADATA_DIR/secret_${name}.meta"
+    
+    if [ ! -f "$SECRETS_DIR/${name}.enc" ]; then
+        echo -e "${RED}Secret not found: $name${NC}"
+        exit 1
+    fi
+    
+    if [ -f "$metadata_file" ]; then
+        # Update category
+        sed -i "s/\"category\": \"[^\"]*\"/\"category\": \"$category\"/" "$metadata_file"
+        
+        audit_log "CATEGORY: $name set to '$category'"
+        echo -e "${GREEN}✓ Category set: $name -> $category${NC}"
+    else
+        echo -e "${RED}No metadata found for: $name${NC}"
+    fi
+}
+
+# Rotate keys
+rotate_keys() {
+    echo -e "${CYAN}Rotating encryption keys...${NC}"
+    
+    # Generate new key
+    local new_key="$KEYS_DIR/default.key.new"
+    openssl rand -base64 32 > "$new_key"
+    chmod 600 "$new_key"
+    
+    # Re-encrypt all secrets
+    for file in "$SECRETS_DIR"/*.enc; do
+        [ -f "$file" ] || continue
+        
+        local temp_file="${file}.tmp"
+        local name=$(basename "$file" .enc)
+        
+        echo "  Re-encrypting: $name"
+        
+        # Decrypt with old key, encrypt with new key
+        openssl enc -aes-256-cbc -d -in "$file" -pass file:"$KEYS_DIR/default.key" | \
+        openssl enc -aes-256-cbc -salt -out "$temp_file" -pass file:"$new_key"
+        
+        if [ $? -eq 0 ]; then
+            mv "$temp_file" "$file"
+        else
+            echo -e "${RED}Failed to rotate: $name${NC}"
+            rm -f "$temp_file"
+            rm -f "$new_key"
+            exit 1
+        fi
+    done
+    
+    # Backup old key and activate new one
+    local backup_name="default.key.$(date +%Y%m%d-%H%M%S)"
+    mv "$KEYS_DIR/default.key" "$KEYS_DIR/$backup_name"
+    mv "$new_key" "$KEYS_DIR/default.key"
+    
+    audit_log "ROTATE_KEYS: Success"
+    echo -e "${GREEN}✓ Keys rotated successfully${NC}"
+    echo -e "${YELLOW}Old key backed up to: $KEYS_DIR/$backup_name${NC}"
+}
+
+# Cloud sync
+cloud_sync() {
+    local action="$1"
+    local provider="${CLOUD_PROVIDER:-s3}"
+    local bucket="${CLOUD_BUCKET:-ade-crypt-backup}"
+    local path="${CLOUD_PATH:-/}"
+    
+    echo -e "${CYAN}Cloud sync: $action via $provider${NC}"
+    
+    case "$provider" in
+        s3)
+            if ! command -v aws >/dev/null 2>&1; then
+                echo -e "${RED}AWS CLI not installed${NC}"
+                exit 1
+            fi
+            
+            case "$action" in
+                push)
+                    aws s3 sync "$BASE_DIR" "s3://$bucket$path" --exclude "*.log"
+                    ;;
+                pull)
+                    aws s3 sync "s3://$bucket$path" "$BASE_DIR"
+                    ;;
+                *)
+                    echo -e "${RED}Unknown action: $action${NC}"
+                    exit 1
+                    ;;
+            esac
+            ;;
+            
+        gdrive)
+            echo -e "${YELLOW}Google Drive sync not yet implemented${NC}"
+            ;;
+            
+        dropbox)
+            echo -e "${YELLOW}Dropbox sync not yet implemented${NC}"
+            ;;
+            
+        *)
+            echo -e "${RED}Unknown provider: $provider${NC}"
+            exit 1
+            ;;
+    esac
+    
+    audit_log "CLOUD_SYNC: $action to $provider"
+    echo -e "${GREEN}✓ Cloud sync complete${NC}"
+}
+
+# Show history
+show_history() {
+    if [ ! -f "$HISTORY_FILE" ]; then
+        echo -e "${YELLOW}No history found${NC}"
+        return
+    fi
+    
+    echo -e "${CYAN}Operation History:${NC}"
+    echo ""
+    
+    tail -20 "$HISTORY_FILE" | while IFS= read -r line; do
+        echo "  $line"
+    done
+}
+
+# Undo last operation
+undo_last() {
+    if [ ! -f "$HISTORY_FILE" ]; then
+        echo -e "${YELLOW}No history to undo${NC}"
+        return
+    fi
+    
+    local last_op=$(tail -1 "$HISTORY_FILE")
+    echo -e "${CYAN}Last operation: $last_op${NC}"
+    
+    # Parse operation
+    local op_type=$(echo "$last_op" | awk '{print $2}')
+    local op_file=$(echo "$last_op" | awk '{print $3}')
+    
+    case "$op_type" in
+        ENCRYPT)
+            if [ -f "${op_file}.enc" ]; then
+                echo -e "${YELLOW}Removing encrypted file: ${op_file}.enc${NC}"
+                rm -f "${op_file}.enc" "${op_file}.enc.sha256" "${op_file}.enc.sig"
+                audit_log "UNDO: Removed ${op_file}.enc"
+            fi
+            ;;
+        DECRYPT)
+            if [ -f "$op_file" ]; then
+                echo -e "${YELLOW}Removing decrypted file: $op_file${NC}"
+                rm -f "$op_file"
+                audit_log "UNDO: Removed $op_file"
+            fi
+            ;;
+        STORE)
+            echo -e "${YELLOW}Cannot undo secret storage${NC}"
+            ;;
+        *)
+            echo -e "${RED}Cannot undo operation: $op_type${NC}"
+            ;;
+    esac
+    
+    # Remove from history
+    sed -i '$d' "$HISTORY_FILE"
+    echo -e "${GREEN}✓ Operation undone${NC}"
+}
+
+# Git hooks
+install_git_hooks() {
+    local git_dir="$(git rev-parse --git-dir 2>/dev/null)"
+    
+    if [ -z "$git_dir" ]; then
+        echo -e "${RED}Not in a git repository${NC}"
+        exit 1
+    fi
+    
+    local hook_file="$git_dir/hooks/pre-commit"
+    
+    cat > "$hook_file" << 'EOF'
+#!/bin/bash
+# ADE-Crypt Git Pre-commit Hook
+
+# Check for sensitive files
+sensitive_extensions=".key .pem .p12 .pfx"
+for ext in $sensitive_extensions; do
+    if git diff --cached --name-only | grep -q "$ext$"; then
+        echo "Error: Attempting to commit sensitive file (*$ext)"
+        echo "Use 'ade-crypt encrypt' first"
+        exit 1
+    fi
+done
+
+# Auto-encrypt marked files
+if [ -f .ade-encrypt-list ]; then
+    while IFS= read -r file; do
+        if [ -f "$file" ] && git diff --cached --name-only | grep -q "^$file$"; then
+            echo "Auto-encrypting: $file"
+            ade-crypt encrypt -s "$file"
+            git add "${file}.enc"
+            git reset HEAD "$file"
+        fi
+    done < .ade-encrypt-list
+fi
+
+exit 0
+EOF
+    
+    chmod +x "$hook_file"
+    
+    audit_log "GIT_HOOK: Installed pre-commit hook"
+    echo -e "${GREEN}✓ Git pre-commit hook installed${NC}"
+    echo -e "${YELLOW}Add files to .ade-encrypt-list for auto-encryption${NC}"
+}
+
+# Backup secrets
+backup_secrets() {
+    local backup_name="ade-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
+    local backup_path="${1:-$HOME/$backup_name}"
+    
+    echo -e "${CYAN}Creating backup...${NC}"
+    
+    tar czf "$backup_path" -C "$BASE_DIR" secrets keys metadata versions
+    
+    if [ $? -eq 0 ]; then
+        # Calculate checksum
+        local checksum=$(sha256sum "$backup_path" | cut -d' ' -f1)
+        echo "$checksum" > "${backup_path}.sha256"
+        
+        audit_log "BACKUP: Created $backup_path (checksum: $checksum)"
+        echo -e "${GREEN}✓ Backup created: $backup_path${NC}"
+        echo -e "${YELLOW}Checksum: $checksum${NC}"
+        
+        # Optional cloud sync
+        if [ -n "$CLOUD_PROVIDER" ]; then
+            echo -e "${CYAN}Syncing to cloud...${NC}"
+            cloud_sync push
+        fi
+    else
+        echo -e "${RED}Backup failed${NC}"
+        exit 1
+    fi
+}
+
+# Restore from backup
+restore_backup() {
+    local backup_file="$1"
+    
+    if [ ! -f "$backup_file" ]; then
+        echo -e "${RED}Backup file not found: $backup_file${NC}"
+        exit 1
+    fi
+    
+    # Verify checksum if exists
+    if [ -f "${backup_file}.sha256" ]; then
+        local expected=$(cat "${backup_file}.sha256")
+        local actual=$(sha256sum "$backup_file" | cut -d' ' -f1)
+        
+        if [ "$expected" != "$actual" ]; then
+            echo -e "${RED}Backup checksum mismatch!${NC}"
+            exit 1
+        fi
+        echo -e "${GREEN}✓ Backup checksum verified${NC}"
+    fi
+    
+    if [ "$INTERACTIVE" -eq 0 ]; then
+        echo -ne "${YELLOW}This will overwrite existing data. Continue? (y/n): ${NC}"
+        read -r response
+        
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            echo "Cancelled"
+            return
+        fi
+    fi
+    
+    echo -e "${CYAN}Restoring from backup...${NC}"
+    tar xzf "$backup_file" -C "$BASE_DIR"
+    
+    audit_log "RESTORE: From $backup_file"
+    echo -e "${GREEN}✓ Backup restored${NC}"
+}
+
+# Clean expired secrets
+clean_expired() {
+    echo -e "${CYAN}Cleaning expired secrets...${NC}"
+    
+    local cleaned=0
+    local now=$(date +%s)
+    
+    for meta_file in "$METADATA_DIR"/secret_*.meta; do
+        [ -f "$meta_file" ] || continue
+        
+        local name=$(grep '"name"' "$meta_file" | cut -d'"' -f4)
+        local expires=$(grep '"expires"' "$meta_file" | cut -d'"' -f4)
+        local exp_time=$(date -d "$expires" +%s 2>/dev/null || echo "$((now + 86400))")
+        
+        if [ "$exp_time" -lt "$now" ]; then
+            echo "  Removing expired: $name"
+            delete_secret "$name"
+            ((cleaned++))
+        fi
+    done
+    
+    audit_log "CLEAN: Removed $cleaned expired secrets"
+    echo -e "${GREEN}✓ Cleaned $cleaned expired secrets${NC}"
+}
+
+# System health check
+health_check() {
+    echo -e "${CYAN}System Health Check${NC}"
+    echo ""
+    
+    # Check directories
+    echo "Directories:"
+    for dir in "$SECRETS_DIR" "$KEYS_DIR" "$METADATA_DIR"; do
+        if [ -d "$dir" ]; then
+            local count=$(ls -1 "$dir" 2>/dev/null | wc -l)
+            echo -e "  ${GREEN}✓${NC} $(basename "$dir"): $count items"
+        else
+            echo -e "  ${RED}✗${NC} $(basename "$dir"): missing"
+        fi
+    done
+    echo ""
+    
+    # Check keys
+    echo "Keys:"
+    if [ -f "$KEYS_DIR/default.key" ]; then
+        local key_age=$(( ($(date +%s) - $(stat -f%m "$KEYS_DIR/default.key" 2>/dev/null || stat -c%Y "$KEYS_DIR/default.key")) / 86400 ))
+        echo -e "  ${GREEN}✓${NC} Default key: $key_age days old"
+        
+        if [ "$key_age" -gt "$KEY_EXPIRY_DAYS" ]; then
+            echo -e "  ${YELLOW}⚠${NC} Key should be rotated (>${KEY_EXPIRY_DAYS} days)"
+        fi
+    else
+        echo -e "  ${RED}✗${NC} Default key: missing"
+    fi
+    echo ""
+    
+    # Check dependencies
+    echo "Dependencies:"
+    for cmd in openssl gpg tar; do
+        if command -v "$cmd" >/dev/null 2>&1; then
+            echo -e "  ${GREEN}✓${NC} $cmd: installed"
+        else
+            echo -e "  ${RED}✗${NC} $cmd: missing"
+        fi
+    done
+    echo ""
+    
+    # Check disk space
+    echo "Disk Usage:"
+    local usage=$(du -sh "$BASE_DIR" 2>/dev/null | cut -f1)
+    echo -e "  Total: $usage"
+    
+    # Check for expired secrets
+    local expired_count=0
+    local now=$(date +%s)
+    
+    for meta_file in "$METADATA_DIR"/secret_*.meta; do
+        [ -f "$meta_file" ] || continue
+        
+        local expires=$(grep '"expires"' "$meta_file" | cut -d'"' -f4)
+        local exp_time=$(date -d "$expires" +%s 2>/dev/null || echo "$((now + 86400))")
+        
+        [ "$exp_time" -lt "$now" ] && ((expired_count++))
+    done
+    
+    if [ "$expired_count" -gt 0 ]; then
+        echo -e "  ${YELLOW}⚠${NC} $expired_count expired secrets found"
+    fi
+    
+    audit_log "HEALTH_CHECK: Completed"
+}
+
+# Initialize
+init_directories
+load_config
+
+# Parse arguments
+COMMAND="${1:-help}"
+shift || true
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -k|--key)
+            KEY_FILE="$2"
+            shift 2
+            ;;
+        -o|--output)
+            OUTPUT_FILE="$2"
+            shift 2
+            ;;
+        -p|--password)
+            USE_PASSWORD=true
+            shift
+            ;;
+        -s|--shred)
+            SHRED_ORIGINAL=true
+            shift
+            ;;
+        -r|--recursive)
+            RECURSIVE=true
+            shift
+            ;;
+        -a|--armor)
+            ARMOR=true
+            shift
+            ;;
+        -2|--two-factor)
+            TWO_FACTOR=true
+            shift
+            ;;
+        -c|--compress)
+            COMPRESSION="$2"
+            shift 2
+            ;;
+        -m|--multi)
+            MULTI_RECIPIENT="$2"
+            shift 2
+            ;;
+        -S|--sign)
+            SIGN_FILES=true
+            shift
+            ;;
+        -v|--verbose)
+            VERBOSE=1
+            shift
+            ;;
+        -q|--quiet)
+            QUIET=1
+            shift
+            ;;
+        -i|--interactive)
+            INTERACTIVE=1
+            shift
+            ;;
+        -P|--progress)
+            PROGRESS=1
+            shift
+            ;;
+        --config)
+            CONFIG_FILE="$2"
+            load_config
+            shift 2
+            ;;
+        --no-audit)
+            AUDIT_ENABLED=0
+            shift
+            ;;
+        --no-verify)
+            VERIFY_CHECKSUM=false
+            shift
+            ;;
+        --category)
+            CATEGORY="$2"
+            shift 2
+            ;;
+        --tags)
+            TAGS="$2"
+            shift 2
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+# Check dependencies
+check_dependencies
+
+# Execute command
+case "$COMMAND" in
+    encrypt)
+        if [ "$STREAMING" = true ] || [ -z "$1" ]; then
+            stream_encrypt
+        elif [ -n "$MULTI_RECIPIENT" ]; then
+            multi_encrypt "$1" "$MULTI_RECIPIENT" "$OUTPUT_FILE"
+        elif [ -d "$1" ] || [ "$RECURSIVE" = true ]; then
+            # Directory encryption handled separately
+            encrypt_file "$1" "$OUTPUT_FILE"
+        else
+            encrypt_file "$1" "$OUTPUT_FILE"
+        fi
+        ;;
+    decrypt)
+        if [ "$STREAMING" = true ] || [ -z "$1" ]; then
+            stream_decrypt
+        else
+            decrypt_file "$1" "$OUTPUT_FILE"
+        fi
+        ;;
+    stream-encrypt)
+        STREAMING=true
+        stream_encrypt
+        ;;
+    stream-decrypt)
+        STREAMING=true
+        stream_decrypt
+        ;;
+    multi-encrypt)
+        multi_encrypt "$1" "${MULTI_RECIPIENT:-$2}" "$3"
+        ;;
+    sign)
+        sign_file "$1"
+        ;;
+    verify)
+        verify_signature "$1"
+        ;;
+    batch)
+        batch_process "$1" "${2:-encrypt}"
+        ;;
+    split)
+        split_file "$1" "${2:-100M}"
+        ;;
+    merge)
+        merge_files "$1" "$2"
+        ;;
+    store)
+        store_secret "$1"
+        ;;
+    get)
+        get_secret "$1" "${2:-latest}"
+        ;;
+    list)
+        list_secrets_detailed
+        ;;
+    search)
+        search_secrets "$1" "$CATEGORY"
+        ;;
+    delete)
+        delete_secret "$1"
+        ;;
+    tag)
+        add_tags "$1" "$2"
+        ;;
+    category)
+        set_category "$1" "$2"
+        ;;
+    expire)
+        set_expiration "$1" "$2"
+        ;;
+    version)
+        get_secret "$1" "$2"
+        ;;
+    export)
+        export_secrets "${1:-json}"
+        ;;
+    import)
+        import_secrets "$1" "${2:-auto}"
+        ;;
+    share)
+        share_secret "$1"
+        ;;
+    env-export)
+        export_secrets "env"
+        ;;
+    docker-export)
+        export_secrets "docker"
+        ;;
+    k8s-export)
+        export_secrets "k8s"
+        ;;
+    generate-key)
+        generate_key "$1"
+        ;;
+    list-keys)
+        list_keys
+        ;;
+    rotate-keys)
+        rotate_keys
+        ;;
+    git-hook)
+        install_git_hooks
+        ;;
+    cloud-sync)
+        cloud_sync "${1:-push}"
+        ;;
+    backup)
+        backup_secrets "$1"
+        ;;
+    restore)
+        restore_backup "$1"
+        ;;
+    history)
+        show_history
+        ;;
+    undo)
+        undo_last
+        ;;
+    clean)
+        clean_expired
+        ;;
+    health)
+        health_check
+        ;;
+    interactive)
+        INTERACTIVE=1
+        interactive_mode
+        ;;
+    config)
+        ${EDITOR:-nano} "$CONFIG_FILE"
+        ;;
+    version|--version)
+        echo "ADE-Crypt Enhanced v$VERSION"
+        ;;
+    help|--help|-h)
+        show_help
+        ;;
+    *)
+        echo -e "${RED}Unknown command: $COMMAND${NC}"
+        echo ""
+        show_help
+        exit 1
+        ;;
+esac

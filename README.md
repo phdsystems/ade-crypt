@@ -1,6 +1,6 @@
-# ADE-Crypt Enhanced v2.0
+# ADE-Crypt
 
-Advanced encryption utility with multi-recipient support, cloud sync, and enterprise features.
+Advanced modular encryption utility with enterprise features, cloud sync, and comprehensive secret management.
 
 ## Quick Start
 
@@ -67,9 +67,26 @@ ade-crypt backup && ade-crypt cloud-sync push
 ade-crypt export env > .env
 ```
 
+## Project Structure
+
+```
+ade-crypt/
+├── bin/           # Executables
+├── src/           # Source code
+│   ├── core/      # Core logic
+│   ├── lib/       # Shared libraries
+│   └── modules/   # Feature modules
+├── docs/          # Documentation
+└── tests/         # Test suite
+```
+
+See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for detailed layout.
+
 ## Documentation
 
-For detailed documentation, examples, and security information, see [DOCS.md](DOCS.md)
+- [Detailed Documentation](docs/DOCS.md)
+- [Modular Architecture](docs/MODULAR.md)
+- [Project Structure](PROJECT_STRUCTURE.md)
 
 ## Requirements
 
