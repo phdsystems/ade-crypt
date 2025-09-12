@@ -1,8 +1,9 @@
-# ADE-Crypt Documentation
+# ADE-Crypt Enhanced Documentation v2.0
 
 ## Table of Contents
 
 - [Overview](#overview)
+- [What's New in v2.0](#whats-new-in-v20)
 - [Installation](#installation)
 - [Commands Reference](#commands-reference)
 - [Options Reference](#options-reference)
@@ -13,16 +14,59 @@
 
 ## Overview
 
-ADE-Crypt is a comprehensive encryption utility that provides secure file and directory encryption, secrets management, and key rotation capabilities. Originally developed as part of PHD-ADE (PHD Application Development Environment), it now stands as an independent security tool.
+ADE-Crypt Enhanced v2.0 is a comprehensive encryption utility that provides secure file and directory encryption, advanced secrets management, multi-recipient encryption, cloud synchronization, and enterprise-grade security features. Originally developed as part of PHD-ADE, it now stands as a powerful standalone security tool.
 
 ### Key Features
 
 - **Military-grade encryption** using AES-256-CBC
-- **Flexible encryption modes** (key-based or password-based)
-- **Secure secrets vault** for API keys, tokens, and credentials
-- **Automated key rotation** for compliance and security
-- **Backup and restore** capabilities
-- **Secure file shredding** to prevent recovery
+- **Multi-recipient encryption** for team collaboration
+- **Two-factor authentication** combining keys and passwords
+- **Streaming encryption** for pipeline operations
+- **Digital signatures** for file authenticity
+- **Cloud synchronization** (AWS S3, Google Drive, Dropbox)
+- **Secret versioning** with rollback capability
+- **Audit logging** for compliance tracking
+- **Interactive mode** for beginners
+- **Docker/Kubernetes** integration
+- **Git hooks** for automatic encryption
+- **QR code sharing** for secure secret distribution
+- **Compression support** (gzip, bzip2, xz)
+- **Batch processing** for bulk operations
+- **Key expiration** and automatic rotation
+- **Import/Export** in JSON, YAML, ENV formats
+
+## What's New in v2.0
+
+### Security Enhancements
+- **Multi-recipient encryption**: Encrypt files for multiple users simultaneously
+- **Two-factor encryption**: Require both key and password for maximum security
+- **Digital signatures**: Sign and verify file authenticity
+- **Key expiration**: Automatic key lifecycle management
+- **Audit logging**: Complete operation tracking for compliance
+
+### Usability Improvements
+- **Interactive mode**: Menu-driven interface for ease of use
+- **Configuration file**: Persistent settings in ~/.ade/config
+- **Progress indicators**: Visual feedback for large file operations
+- **Verbose/Quiet modes**: Control output verbosity
+- **Undo functionality**: Reverse recent operations
+- **Health checks**: System status monitoring
+
+### Advanced Features
+- **Streaming encryption**: Process data from stdin/stdout
+- **Cloud synchronization**: Backup to S3, Google Drive, Dropbox
+- **File splitting**: Handle large files efficiently
+- **Compression options**: Reduce file sizes before encryption
+- **Checksum verification**: Ensure data integrity
+- **Batch processing**: Encrypt/decrypt multiple files at once
+
+### Integration Features
+- **Docker/Kubernetes**: Export secrets in container formats
+- **Git hooks**: Automatic encryption on commit
+- **Environment variables**: Export secrets as env vars
+- **Import/Export**: Multiple format support (JSON, YAML, ENV)
+- **QR code generation**: Share secrets visually
+- **SSH integration**: Manage SSH keys securely
 
 ## Installation
 
@@ -198,62 +242,146 @@ ade-crypt restore ade-secrets-20240112-143022.tar.gz
 # Simple encryption
 ade-crypt encrypt report.doc
 
-# With custom output name
-ade-crypt encrypt -o report.secure report.doc
+# With compression
+ade-crypt encrypt -c gzip large-file.sql
 
-# Using specific key
-ade-crypt encrypt -k ~/.keys/custom.key report.doc
+# Two-factor encryption (key + password)
+ade-crypt encrypt -2 sensitive.doc
+
+# With progress indicator
+ade-crypt encrypt -P large-video.mp4
 ```
 
-### Password-Based Encryption
+### Multi-Recipient Encryption
 
 ```bash
-# Encrypt with password
-ade-crypt encrypt -p sensitive.xlsx
-# Enter password: ********
+# Encrypt for multiple users
+ade-crypt multi-encrypt -m "alice.key,bob.key,charlie.key" project.zip
 
-# Decrypt with password
-ade-crypt decrypt -p sensitive.xlsx.enc
-# Enter password: ********
+# Team collaboration
+ade-crypt encrypt -m "team1.key,team2.key" -S shared-doc.pdf
 ```
 
-### Secure Workflows
+### Streaming Operations
 
 ```bash
-# Encrypt and shred original
-ade-crypt encrypt -s confidential.pdf
+# Pipe encryption
+cat data.txt | ade-crypt stream-encrypt > data.enc
 
-# ASCII armor for email transmission
-ade-crypt encrypt -a message.txt
-# Creates base64-encoded output
+# Database backup encryption
+pg_dump mydb | ade-crypt stream-encrypt | gzip > backup.sql.enc.gz
+
+# Decrypt and process
+ade-crypt stream-decrypt < data.enc | grep "pattern"
 ```
 
-### Batch Operations
+### Batch Processing
 
 ```bash
-# Encrypt multiple files
-for file in *.doc; do
-    ade-crypt encrypt "$file"
-done
+# Create batch file
+echo "file1.txt
+file2.doc
+file3.pdf" > batch.list
 
-# Decrypt all .enc files
-for file in *.enc; do
-    ade-crypt decrypt "$file"
-done
+# Batch encrypt
+ade-crypt batch batch.list encrypt
+
+# Batch decrypt
+ade-crypt batch batch.list decrypt
 ```
 
-### Secret Management Workflows
+### Secret Management Advanced
 
 ```bash
-# Store multiple secrets
-for secret in api-key db-pass token; do
-    echo "Storing $secret..."
-    ade-crypt store "$secret"
-done
+# Store with metadata
+ade-crypt store api-key --category production --tags "aws,critical"
 
-# Backup before key rotation
-ade-crypt backup
-ade-crypt rotate-keys
+# Search secrets
+ade-crypt search "api" --category production
+
+# Version control
+ade-crypt version api-key 2  # Get version 2
+
+# Set expiration
+ade-crypt expire api-key 30  # Expires in 30 days
+
+# Export to environment
+ade-crypt export env > .env
+source .env
+```
+
+### Cloud Synchronization
+
+```bash
+# Configure cloud provider
+ade-crypt config
+# Set CLOUD_PROVIDER=s3
+# Set CLOUD_BUCKET=my-backups
+
+# Push to cloud
+ade-crypt cloud-sync push
+
+# Pull from cloud
+ade-crypt cloud-sync pull
+
+# Automated backup with cloud sync
+ade-crypt backup && ade-crypt cloud-sync push
+```
+
+### Docker/Kubernetes Integration
+
+```bash
+# Export for Docker
+ade-crypt docker-export | bash
+
+# Generate Kubernetes secrets
+ade-crypt k8s-export > secrets.yaml
+kubectl apply -f secrets.yaml
+
+# Export as environment variables
+eval $(ade-crypt env-export)
+```
+
+### Git Integration
+
+```bash
+# Install pre-commit hook
+ade-crypt git-hook install
+
+# Create auto-encrypt list
+echo "secrets.json
+config.yml
+.env" > .ade-encrypt-list
+
+# Files will be automatically encrypted on commit
+git add secrets.json
+git commit -m "Add secrets"  # Automatically encrypted
+```
+
+### Interactive Mode
+
+```bash
+# Launch interactive interface
+ade-crypt interactive
+
+# Or use -i flag with any command
+ade-crypt -i encrypt
+```
+
+### Health Monitoring
+
+```bash
+# System health check
+ade-crypt health
+
+# Clean expired secrets
+ade-crypt clean
+
+# View operation history
+ade-crypt history
+
+# Undo last operation
+ade-crypt undo
 ```
 
 ## Security

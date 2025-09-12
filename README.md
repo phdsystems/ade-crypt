@@ -1,6 +1,6 @@
-# ADE-Crypt
+# ADE-Crypt Enhanced v2.0
 
-Standalone encryption utility for files, directories, and secrets management.
+Advanced encryption utility with multi-recipient support, cloud sync, and enterprise features.
 
 ## Quick Start
 
@@ -23,28 +23,48 @@ ade-crypt get api-key
 
 ## Core Features
 
-- **Encryption**: Files and directories with AES-256-CBC
-- **Secrets**: Secure storage and retrieval
-- **Key Management**: Generation and rotation
-- **Backup/Restore**: Full data protection
+- **Encryption**: AES-256-CBC with compression support
+- **Multi-Recipient**: Encrypt for multiple users
+- **Two-Factor**: Combined key + password protection  
+- **Cloud Sync**: AWS S3, Google Drive, Dropbox
+- **Streaming**: Pipeline encryption/decryption
+- **Audit Logging**: Complete operation tracking
+- **Interactive Mode**: Menu-driven interface
+- **Docker/K8s**: Container secret integration
+
+## What's New in v2.0
+
+- Multi-recipient encryption
+- Two-factor authentication
+- Streaming encryption (stdin/stdout)
+- Cloud synchronization
+- Digital signatures
+- Secret versioning
+- Audit logging
+- Interactive mode
+- Docker/K8s integration
+- [Full changelog](DOCS.md#whats-new-in-v20)
 
 ## Common Usage
 
 ```bash
-# Encrypt with password
-ade-crypt encrypt -p document.pdf
+# Interactive mode
+ade-crypt interactive
 
-# Encrypt and shred original
-ade-crypt encrypt -s confidential.doc
+# Multi-recipient encryption
+ade-crypt multi-encrypt -m "alice.key,bob.key" file.pdf
 
-# Encrypt directory
-ade-crypt encrypt -r ./secrets-folder
+# Two-factor encryption
+ade-crypt encrypt -2 sensitive.doc
 
-# List stored secrets
-ade-crypt list
+# Stream encryption
+cat data.txt | ade-crypt stream-encrypt > data.enc
 
-# Rotate encryption keys
-ade-crypt rotate-keys
+# Cloud backup
+ade-crypt backup && ade-crypt cloud-sync push
+
+# Export secrets
+ade-crypt export env > .env
 ```
 
 ## Documentation
