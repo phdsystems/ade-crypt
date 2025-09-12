@@ -1,4 +1,4 @@
-# Pre-commit hooks configuration for ADE-Crypt
+# Pre-commit hooks configuration for ADE crypt
 # Install with: pip install pre-commit && pre-commit install
 
 repos:
@@ -42,7 +42,7 @@ repos:
     hooks:
       # Run our custom linting
       - id: ade-crypt-lint
-        name: ADE-Crypt Linting
+        name: ADE crypt Linting
         entry: ./scripts/lint.sh
         language: script
         files: \.(sh|bash)$
@@ -50,7 +50,7 @@ repos:
         
       # Run tests on changes
       - id: ade-crypt-test
-        name: ADE-Crypt Tests
+        name: ADE crypt Tests
         entry: ./scripts/test.sh
         language: script
         files: ^(src/|tests/|ade-crypt$|bin/)

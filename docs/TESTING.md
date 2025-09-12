@@ -2,7 +2,7 @@
 
 ## Overview
 
-ADE-Crypt uses a comprehensive testing and quality assurance pipeline with industry-standard tools specifically designed for bash/shell projects.
+ADE crypt uses a comprehensive testing and quality assurance pipeline with industry-standard tools specifically designed for bash/shell projects.
 
 ## Tools Used
 
@@ -345,4 +345,4 @@ time ./ade-crypt secrets get large-secret
 grep "STORE" ~/.ade/audit.log
 ```
 
-This comprehensive testing setup ensures ADE-Crypt maintains high quality and reliability!
+This comprehensive testing setup ensures ADE crypt maintains high quality and reliability!

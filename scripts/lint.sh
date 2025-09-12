@@ -1,5 +1,5 @@
 #!/bin/bash
-# Linting script for ADE-Crypt
+# Linting script for ADE crypt
 # Runs ShellCheck on all bash scripts
 
 set -e

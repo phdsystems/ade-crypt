@@ -1,5 +1,5 @@
 #!/bin/bash
-# Test runner script for ADE-Crypt
+# Test runner script for ADE crypt
 # Runs BATS tests with proper setup
 
 set -e
@@ -15,7 +15,7 @@ NC='\033[0m'
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-echo -e "${CYAN}ADE-Crypt Test Suite${NC}"
+echo -e "${CYAN}ADE crypt Test Suite${NC}"
 echo ""
 
 # Check dependencies

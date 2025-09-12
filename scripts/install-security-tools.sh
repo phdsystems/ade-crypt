@@ -1,5 +1,5 @@
 #!/bin/bash
-# Install security and analysis tools for ADE-Crypt
+# Install security and analysis tools for ADE crypt
 # Includes secret scanners, performance tools, and code metrics
 
 set -e
@@ -138,7 +138,7 @@ install_tool "trufflehog" "" "" "truffleHog3" ""
 # Create Gitleaks config
 echo -e "${CYAN}Creating Gitleaks configuration...${NC}"
 cat > .gitleaks.toml << 'EOF'
-title = "ADE-Crypt Gitleaks Config"
+title = "ADE crypt Gitleaks Config"
 
 [extend]
 useDefault = true

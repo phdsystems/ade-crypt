@@ -1,5 +1,5 @@
 #!/bin/bash
-# Automated security fix script for ADE-Crypt
+# Automated security fix script for ADE crypt
 # Fixes common security issues automatically where possible
 
 set -e
@@ -16,7 +16,7 @@ BOLD='\033[1m'
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${PROJECT_ROOT}"
 
-echo -e "${CYAN}${BOLD}ADE-Crypt Automated Security Fixes${NC}"
+echo -e "${CYAN}${BOLD}ADE crypt Automated Security Fixes${NC}"
 echo -e "${CYAN}===================================${NC}"
 echo ""
 

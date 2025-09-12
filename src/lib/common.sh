@@ -54,7 +54,7 @@ load_config() {
 # Create default configuration
 create_default_config() {
     cat > "${CONFIG_FILE}" << EOF
-# ADE-Crypt Configuration
+# ADE crypt Configuration
 ALGORITHM="${DEFAULT_ALGORITHM}"
 COMPRESSION="${DEFAULT_COMPRESSION}"
 AUTO_BACKUP=1

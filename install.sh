@@ -1,5 +1,5 @@
 #!/bin/bash
-# ADE-Crypt Installation Script
+# ADE crypt Installation Script
 
 set -e
 

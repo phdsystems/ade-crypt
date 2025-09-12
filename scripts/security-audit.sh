@@ -1,5 +1,5 @@
 #!/bin/bash
-# Security audit script for ADE-Crypt
+# Security audit script for ADE crypt
 # Performs comprehensive security analysis including trap handlers, temp files, and secrets
 
 set -e
@@ -21,7 +21,7 @@ cd "${PROJECT_ROOT}"
 ISSUES_FOUND=0
 WARNINGS=0
 
-echo -e "${CYAN}${BOLD}ADE-Crypt Security Audit${NC}"
+echo -e "${CYAN}${BOLD}ADE crypt Security Audit${NC}"
 echo -e "${CYAN}========================${NC}"
 echo ""
 

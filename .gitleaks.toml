@@ -1,4 +1,4 @@
-title = "ADE-Crypt Gitleaks Config"
+title = "ADE crypt Gitleaks Config"
 
 [extend]
 useDefault = true

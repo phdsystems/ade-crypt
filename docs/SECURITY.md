@@ -1,8 +1,8 @@
-# Security Best Practices for ADE-Crypt
+# Security Best Practices for ADE crypt
 
 ## Overview
 
-This document outlines security best practices for developing and maintaining ADE-Crypt.
+This document outlines security best practices for developing and maintaining ADE crypt.
 
 ## Security Principles
 

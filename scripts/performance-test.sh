@@ -1,5 +1,5 @@
 #!/bin/bash
-# Performance testing script for ADE-Crypt
+# Performance testing script for ADE crypt
 # Benchmarks key operations and identifies bottlenecks
 
 set -e
@@ -22,7 +22,7 @@ TEST_DIR="/tmp/ade-perf-test-$$"
 mkdir -p "${TEST_DIR}"
 trap "rm -rf ${TEST_DIR}" EXIT INT TERM
 
-echo -e "${CYAN}${BOLD}ADE-Crypt Performance Testing${NC}"
+echo -e "${CYAN}${BOLD}ADE crypt Performance Testing${NC}"
 echo -e "${CYAN}=============================${NC}"
 echo ""
 

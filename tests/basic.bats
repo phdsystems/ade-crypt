@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Basic functionality tests for ADE-Crypt
+# Basic functionality tests for ADE crypt
 
 load test_helper
 
@@ -14,7 +14,7 @@ teardown() {
 @test "ade-crypt shows version" {
     run run_ade_crypt version
     assert_success
-    assert_output_contains "ADE-Crypt"
+    assert_output_contains "ADE crypt"
     assert_output_contains "v2.1.0"
 }
 

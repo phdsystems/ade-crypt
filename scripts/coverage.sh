@@ -1,5 +1,5 @@
 #!/bin/bash
-# Code coverage reporting for ADE-Crypt using bashcov
+# Code coverage reporting for ADE crypt using bashcov
 
 set -e
 
@@ -141,7 +141,7 @@ mkdir -p coverage/
 
 # Run tests with coverage
 echo "Running tests with coverage tracking..."
-export BASHCOV_COMMAND_NAME="ADE-Crypt"
+export BASHCOV_COMMAND_NAME="ADE crypt"
 bashcov --root "$PROJECT_ROOT" -- ./scripts/test.sh
 
 # Generate HTML report
@@ -152,7 +152,7 @@ if [ -f coverage/.resultset.json ]; then
     if command -v jq >/dev/null 2>&1; then
         echo ""
         echo -e "${CYAN}Coverage Summary:${NC}"
-        jq -r '.ADE-Crypt.coverage | keys[] as $k | "\($k): \(.[$k] | map(select(. != null)) | length)/\(.[$k] | length) lines"' coverage/.resultset.json | head -20
+        jq -r '.ADE crypt.coverage | keys[] as $k | "\($k): \(.[$k] | map(select(. != null)) | length)/\(.[$k] | length) lines"' coverage/.resultset.json | head -20
     fi
     
     echo ""
