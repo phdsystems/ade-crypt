@@ -20,12 +20,61 @@ echo ""
 
 # Check if shellcheck is installed
 if ! command -v shellcheck >/dev/null 2>&1; then
-    echo -e "${RED}Error: ShellCheck is not installed${NC}"
-    echo "Install with:"
-    echo "  Ubuntu/Debian: sudo apt-get install shellcheck"
-    echo "  macOS:         brew install shellcheck"
-    echo "  Or download from: https://github.com/koalaman/shellcheck"
-    exit 1
+    echo -e "${YELLOW}ShellCheck is not installed${NC}"
+    echo -n "Would you like to install it now? (y/n): "
+    read -r response
+    
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        echo -e "${CYAN}Installing ShellCheck...${NC}"
+        
+        # Detect OS and install accordingly
+        if [ -f /etc/debian_version ]; then
+            # Debian/Ubuntu
+            if command -v sudo >/dev/null 2>&1; then
+                sudo apt-get update && sudo apt-get install -y shellcheck
+            else
+                echo -e "${RED}Error: sudo is required to install ShellCheck${NC}"
+                exit 1
+            fi
+        elif [ -f /etc/redhat-release ]; then
+            # RHEL/CentOS/Fedora
+            if command -v sudo >/dev/null 2>&1; then
+                sudo yum install -y ShellCheck || sudo dnf install -y ShellCheck
+            else
+                echo -e "${RED}Error: sudo is required to install ShellCheck${NC}"
+                exit 1
+            fi
+        elif [ "$(uname)" = "Darwin" ]; then
+            # macOS
+            if command -v brew >/dev/null 2>&1; then
+                brew install shellcheck
+            else
+                echo -e "${RED}Error: Homebrew is required to install ShellCheck on macOS${NC}"
+                echo "Install Homebrew from: https://brew.sh"
+                exit 1
+            fi
+        else
+            echo -e "${RED}Error: Unsupported operating system${NC}"
+            echo "Please install ShellCheck manually from: https://github.com/koalaman/shellcheck"
+            exit 1
+        fi
+        
+        # Verify installation
+        if command -v shellcheck >/dev/null 2>&1; then
+            echo -e "${GREEN}✓ ShellCheck installed successfully${NC}"
+            echo ""
+        else
+            echo -e "${RED}Error: ShellCheck installation failed${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${RED}ShellCheck is required to run lint checks${NC}"
+        echo "Install manually with:"
+        echo "  Ubuntu/Debian: sudo apt-get install shellcheck"
+        echo "  macOS:         brew install shellcheck"
+        echo "  Or download from: https://github.com/koalaman/shellcheck"
+        exit 1
+    fi
 fi
 
 # Find all shell scripts
