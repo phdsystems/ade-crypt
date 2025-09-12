@@ -30,6 +30,8 @@ ade-crypt/
 ├── tests/                  # Test suite
 │   ├── basic.bats         # Basic functionality tests
 │   ├── modules/           # Module-specific tests
+│   │   ├── encrypt.bats   # Encryption tests
+│   │   └── secrets.bats   # Secrets management tests
 │   └── test_helper.bash   # Test utilities
 │
 ├── scripts/               # Development scripts

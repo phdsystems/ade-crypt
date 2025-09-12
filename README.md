@@ -9,16 +9,16 @@ Advanced modular encryption utility for Agentic Development Environment with ent
 curl -sSL https://raw.githubusercontent.com/phdsystems/ade-crypt/main/install.sh | bash
 
 # Encrypt a file
-ade-crypt encrypt sensitive.txt
+ade-crypt encrypt file sensitive.txt
 
 # Decrypt a file  
-ade-crypt decrypt sensitive.txt.enc
+ade-crypt decrypt file sensitive.txt.enc
 
 # Store a secret
-ade-crypt store api-key
+ade-crypt secrets store api-key
 
 # Get a secret
-ade-crypt get api-key
+ade-crypt secrets get api-key
 ```
 
 ## Core Features
@@ -43,7 +43,7 @@ ade-crypt get api-key
 - Audit logging
 - Interactive mode
 - Docker/K8s integration
-- [Full changelog](docs/DOCS.md#whats-new-in-v20)
+- [Full changelog](docs/DOCS.md#whats-new-in-v21)
 
 ## Dependencies
 
@@ -150,8 +150,8 @@ See [Project Structure](docs/PROJECT_STRUCTURE.md) for detailed layout.
 ## Documentation
 
 - [Detailed Documentation](docs/DOCS.md)
-- [Modular Architecture](docs/MODULAR.md)
 - [Project Structure](docs/PROJECT_STRUCTURE.md)
+- [Testing Guide](docs/TESTING.md)
 
 ## Requirements
 

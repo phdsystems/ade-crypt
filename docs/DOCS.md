@@ -3,7 +3,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
-- [What's New in v2.0](#whats-new-in-v20)
+- [What's New in v2.1](#whats-new-in-v21)
 - [Installation](#installation)
 - [Commands Reference](#commands-reference)
 - [Options Reference](#options-reference)
@@ -117,7 +117,7 @@ ade-crypt --version
 Encrypts a single file using the default or specified key.
 
 ```bash
-ade-crypt encrypt document.pdf
+ade-crypt encrypt file document.pdf
 # Output: document.pdf.enc
 ```
 
@@ -125,7 +125,7 @@ ade-crypt encrypt document.pdf
 Decrypts an encrypted file.
 
 ```bash
-ade-crypt decrypt document.pdf.enc
+ade-crypt decrypt file document.pdf.enc
 # Output: document.pdf
 ```
 
@@ -135,7 +135,7 @@ ade-crypt decrypt document.pdf.enc
 Encrypts an entire directory into a single encrypted archive.
 
 ```bash
-ade-crypt encrypt -r ./sensitive-data
+ade-crypt encrypt directory ./sensitive-data
 # Output: sensitive-data.tar.enc
 ```
 
@@ -143,7 +143,7 @@ ade-crypt encrypt -r ./sensitive-data
 Decrypts and extracts an encrypted directory archive.
 
 ```bash
-ade-crypt decrypt sensitive-data.tar.enc
+ade-crypt decrypt directory sensitive-data.tar.enc
 # Extracts to current directory
 ```
 
@@ -153,7 +153,7 @@ ade-crypt decrypt sensitive-data.tar.enc
 Stores a secret securely in the vault.
 
 ```bash
-ade-crypt store github-token
+ade-crypt secrets store github-token
 # Prompts for secret value
 ```
 
@@ -161,7 +161,7 @@ ade-crypt store github-token
 Retrieves a stored secret.
 
 ```bash
-ade-crypt get github-token
+ade-crypt secrets get github-token
 # Outputs the secret value
 ```
 
@@ -169,7 +169,7 @@ ade-crypt get github-token
 Lists all stored secrets (names only).
 
 ```bash
-ade-crypt list
+ade-crypt secrets list
 # Output:
 #   • github-token
 #   • api-key
@@ -180,7 +180,7 @@ ade-crypt list
 Permanently deletes a stored secret.
 
 ```bash
-ade-crypt delete old-token
+ade-crypt secrets delete old-token
 # Confirms before deletion
 ```
 
@@ -191,17 +191,17 @@ Generates a new encryption key.
 
 ```bash
 # Generate default key
-ade-crypt generate-key
+ade-crypt keys generate
 
 # Generate named key
-ade-crypt generate-key project-key
+ade-crypt keys generate project-key
 ```
 
 #### `rotate-keys`
 Rotates all encryption keys and re-encrypts existing secrets.
 
 ```bash
-ade-crypt rotate-keys
+ade-crypt keys rotate
 # Backs up old key to ~/.ade/keys/default.key.old
 ```
 
@@ -211,7 +211,7 @@ ade-crypt rotate-keys
 Creates a complete backup of all secrets and keys.
 
 ```bash
-ade-crypt backup
+ade-crypt backup create
 # Output: ade-secrets-20240112-143022.tar.gz
 ```
 
@@ -219,7 +219,7 @@ ade-crypt backup
 Restores secrets and keys from a backup file.
 
 ```bash
-ade-crypt restore ade-secrets-20240112-143022.tar.gz
+ade-crypt backup restore ade-secrets-20240112-143022.tar.gz
 # Prompts for confirmation
 ```
 
@@ -240,16 +240,16 @@ ade-crypt restore ade-secrets-20240112-143022.tar.gz
 
 ```bash
 # Simple encryption
-ade-crypt encrypt report.doc
+ade-crypt encrypt file report.doc
 
 # With compression
-ade-crypt encrypt -c gzip large-file.sql
+ade-crypt encrypt file large-file.sql -c gzip
 
 # Two-factor encryption (key + password)
-ade-crypt encrypt -2 sensitive.doc
+ade-crypt encrypt file sensitive.doc -2
 
 # With progress indicator
-ade-crypt encrypt -P large-video.mp4
+ade-crypt encrypt file large-video.mp4 -P
 ```
 
 ### Multi-Recipient Encryption

@@ -70,9 +70,7 @@ tests/
 ├── basic.bats           # Basic functionality tests
 └── modules/             # Module-specific tests
     ├── encrypt.bats
-    ├── decrypt.bats
-    ├── secrets.bats
-    └── keys.bats
+    └── secrets.bats
 ```
 
 ## Writing Tests
