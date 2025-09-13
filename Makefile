@@ -265,3 +265,25 @@ pre-commit: lint test security
 # Full CI/CD pipeline
 full-ci: install-dev all-checks coverage
 	@echo "✓ Full CI pipeline complete"
+
+# ============================================================================
+# ARCHITECTURE & DESIGN VALIDATION
+# ============================================================================
+
+# Validate architectural decisions
+validate-arch:
+	@echo "🏗️  Validating Architecture..."
+	@./scripts/validate-architecture.sh
+
+# Deep review combining all validation layers
+deep-review: validate-arch security test metrics
+	@echo ""
+	@echo "="
+	@echo "🔍 Deep Review Complete!"
+	@echo "="
+	@echo ""
+	@echo "Validation Results:"
+	@echo "  ✓ Architecture validated"
+	@echo "  ✓ Security checked"
+	@echo "  ✓ Tests executed"
+	@echo "  ✓ Metrics analyzed"
