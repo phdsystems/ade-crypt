@@ -42,26 +42,23 @@ vim src/modules/mymodule.sh
 ./ade-crypt mymodule test
 ```
 
-### 2. Run Tests
+### 2. Quality Checks
 
 ```bash
 # Run all tests (120+ tests)
 make test
 
+# Architecture validation (NEW)
+make validate-arch
+
+# Security scanning
+make security
+
+# Complete quality check
+make deep-review
+
 # Run specific test file
 ./scripts/test.sh basic.bats
-
-# Run module tests
-bats tests/modules/*.bats
-
-# Run script tests
-bats tests/scripts/*.bats
-
-# Run with verbose output
-VERBOSE=true make test
-
-# Get test summary
-./scripts/test-summary.sh
 ```
 
 ### 3. Lint Code
@@ -121,6 +118,14 @@ make setup       # Set up development environment
 make check-deps  # Check dependencies
 make install-dev # Install dev dependencies
 make clean       # Clean temporary files
+```
+
+### Architecture & Design Commands (NEW)
+
+```bash
+make validate-arch    # Validate architectural decisions
+make deep-review     # Comprehensive validation
+# See docs/adr/ for Architectural Decision Records
 ```
 
 ### Build Commands

@@ -34,7 +34,8 @@ validate_encryption_algorithms() {
     while IFS= read -r line; do
         # Extract algorithm from openssl enc commands
         if echo "$line" | grep -q "openssl enc"; then
-            local algo=$(echo "$line" | grep -oP '(?<=\-)[a-z0-9\-]+(?=\s|$)' | head -1)
+            # Look for cipher algorithm after openssl enc, skip flags like -n, -e, -d
+            local algo=$(echo "$line" | grep -oP 'openssl enc\s+(-[a-zA-Z]\s+)*-\K[a-z0-9\-]+')
             
             if [[ -n "$algo" && ! " $approved_algos " =~ " $algo " ]]; then
                 echo -e "  ${RED}✗ Unapproved algorithm: $algo${NC}"

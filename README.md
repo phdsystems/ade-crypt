@@ -60,6 +60,8 @@ See [Installation Guide](docs/INSTALLATION.md) for more options.
 | [Testing](docs/TESTING.md) | Testing and quality assurance |
 | [Development](docs/DEVELOPMENT.md) | Development guidelines and workflow |
 | [Security](docs/SECURITY.md) | Security best practices |
+| [Code Review Strategy](docs/CODE_REVIEW_STRATEGY.md) | Automated review approach |
+| [ADR Documentation](docs/adr/) | Architectural Decision Records |
 | [Library Usage](lib/README.md) | Standalone library integration |
 | [Changelog](CHANGELOG.md) | Version history and changes |
 
@@ -113,20 +115,23 @@ cd ade-crypt
 make setup
 ```
 
-### Testing
+### Quality Assurance
 ```bash
-make test        # Run all tests
-make lint        # Run ShellCheck linting
-make coverage    # Generate coverage report
-make security    # Run security audit
-make ci          # Full CI pipeline
+make test           # Run all tests
+make lint           # Run ShellCheck linting
+make validate-arch  # Validate architectural decisions (NEW)
+make security       # Run security audit
+make deep-review    # Comprehensive validation (NEW)
+make coverage       # Generate coverage report
+make ci             # Full CI pipeline
 ```
 
-**Test Coverage**: 120+ tests across 12 test files
+**Quality Coverage**: 120+ tests + architectural validation
 - Unit tests for core modules
-- Integration tests for workflows
+- Integration tests for workflows  
 - Security vulnerability tests
 - Performance benchmarks
+- **Architecture validation** (enforces design standards)
 
 See [Testing Guide](docs/TESTING.md) for details.
 
